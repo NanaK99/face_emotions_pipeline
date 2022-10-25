@@ -1,4 +1,4 @@
-- Run pip install -r requirements.txt
+- Run pip3 install -r requirements.txt
 
 - Run python face_visible_expressions.py
 
