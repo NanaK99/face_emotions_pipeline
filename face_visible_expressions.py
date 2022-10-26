@@ -16,6 +16,8 @@ FACE_TILT = .5
 EYE_OPEN_HEIGHT = .35
 
 BROWS_RAISE = .16
+BROW_RAISE_LEFT = .0028
+BROW_RAISE_RIGHT = .025
 FURROWED_BROWS = 0.05
 
 
@@ -99,6 +101,7 @@ with mp_face_mesh.FaceMesh(
       elif face_angle < -FACE_TILT:
         text = "head tilt L"
 
+      # Narrowed eyes and furrowed brows
       eyeR_top = face[159]
       eyeR_bottom = face[145]
       eyeR_inner = face[133]
@@ -130,6 +133,7 @@ with mp_face_mesh.FaceMesh(
         else:
           text = "Narrowed eyes"
 
+      # Brows, widened eyes and tense
       browR_top = face[52]
       browR_bottom = face[223]
       browR_eyeR_lower_dist = dist.euclidean([browR_bottom.x, browR_bottom.y],
@@ -154,6 +158,18 @@ with mp_face_mesh.FaceMesh(
           text = "Widened eyes"
         else:
           text = "Tense"
+      else:
+        if brows_avg_raise > BROWS_RAISE and eyeA_ar > EYE_OPEN_HEIGHT:
+          text = "Brows raised"
+
+      brows_relative_raise = browR_eyeR_dist - browL_eyeL_dist
+
+      if brows_relative_raise < BROW_RAISE_LEFT:
+        brows_raised = False
+        text = "Left brow raised"
+      elif brows_relative_raise > BROW_RAISE_RIGHT:
+        brows_raised = False
+        text = "Right brow raised"
 
       # Smile
       mouth_outer_right = face[76]
