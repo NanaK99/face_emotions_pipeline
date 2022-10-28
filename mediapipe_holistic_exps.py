@@ -51,24 +51,21 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         # LEAN IN and LEAN OUT
-        try:
-            landmarks = results.pose_landmarks.landmark
-            eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
-            eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
-            eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
-            eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
-            eyeR_len = dist.euclidean([eyeR_inner.x, eyeR_inner.y], [eyeR_outer.x, eyeR_outer.y])
-            eyeL_len = dist.euclidean([eyeL_inner.x, eyeL_inner.y], [eyeL_outer.x, eyeL_outer.y])
-            print(eyeL_len, eyeR_len)
-            if eyeR_len > 0.06 and eyeL_len > 0.06:
-                text = "LEAN IN"
-            elif eyeR_len < 0.05 and eyeL_len < 0.05:
-                text = "LEAN OUT"
-            else:
-                text = ""
-
-        except:
-            pass
+        # try:
+        #     landmarks = results.pose_landmarks.landmark
+        #     nose = landmarks[mp_holistic.PoseLandmark.NOSE.value]
+        #     nose_y_ratio = 1 / nose.y
+        #     nose_z_ratio = 1 / nose.z
+        #     if abs(nose_y_ratio) < 1.5 or abs(nose_z_ratio) < 0.35:
+        #         text = "LEAN IN"
+        #     elif abs(nose_y_ratio) > 2 or abs(nose_z_ratio) > 1:
+        #         text = "LEAN OUT"
+        #     # else:
+        #     #     text = "normal posture"
+        #     else:
+        #         text = ""
+        # except:
+        #     pass
 
         # HEAD SHAKE
         try:
@@ -83,24 +80,32 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
             mouthL = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
             mouth_len = dist.euclidean([mouthR.x, mouthR.y], [mouthL.x, mouthL.y])
 
+            # if mouth_len < 0.06:
 
             if len(head_shake_dir) < 3:
+                # print("len is still less than 3")
 
                 if len(turn) == 0:
+                    # print("turn is still empty")
                     if right_to_left_ratio > 1.3:
                         turn = "right"
                         head_shake_dir.append(turn)
                         img_idxs.append(img_ind)
+                        # print("#####",head_shake_dir, img_idxs)
                     elif right_to_left_ratio < 0.7:
                         turn = "left"
                         head_shake_dir.append(turn)
                         img_idxs.append(img_ind)
+                        # print("$$$$$",head_shake_dir, img_idxs)
 
                 elif right_to_left_ratio > 1.3:
+                    # print("turn is not empty anymore")
                     turn = "right"
                     if turn != head_shake_dir[-1]:
                         head_shake_dir.append(turn)
                         img_idxs.append(img_ind)
+                        # print("!!!!!!",head_shake_dir, img_idxs)
+
                     else:
                         continue
 
@@ -109,16 +114,24 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                     if turn != head_shake_dir[-1]:
                         head_shake_dir.append(turn)
                         img_idxs.append(img_ind)
+                        # print("@@@@@@@",head_shake_dir, img_idxs)
+
                     else:
                         continue
 
             else:
                 if img_idxs[-1] - img_idxs[0] < 50:
                     text = "HEAD SHAKE"
+                    # last_img_ind = img_ind
+                    # print("HEAD SHAKE")
+                    # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+                    # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
                     turn = ""
                     head_shake_dir = []
                     img_idxs = []
                 else:
+                    # print("starting again")
+                    # print("?????????????????????????????????????????????????")
                     turn = ""
                     head_shake_dir = []
                     img_idxs = []
@@ -129,33 +142,41 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         #HEAD NOD
         try:
             landmarks = results.pose_landmarks.landmark
+            # print(landmarks)
             eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
             eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
             eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
             eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
+            # print("EYEEEE", eyeR_inner, eyeR_outer)
             nodR_inner_ratio = 1 / eyeR_inner.z
             nodR_outer_ratio = 1 / eyeR_outer.z
             nodL_inner_ratio = 1 / eyeL_inner.z
             nodL_outer_ratio = 1 / eyeL_outer.z
 
             if len(head_nod_dir) < 3:
+                # print("head nod dir is still less than 3")
                 if len(nod) == 0:
 
                     if abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
                         nod = "down"
                         head_nod_dir.append(nod)
                         head_nod_idxs.append(img_ind)
+                        # print("#####", head_nod_dir, head_nod_idxs)
 
                     elif abs(nodR_inner_ratio) < 0.27 and abs(nodR_inner_ratio) < 0.27:
                         nod = "up"
                         head_nod_dir.append(nod)
                         head_nod_idxs.append(img_ind)
+                        # print("$$$$$", head_nod_dir, head_nod_idxs)
 
                 elif abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
+                    # print("nod is not empty anymore")
                     nod = "down"
                     if nod != head_nod_dir[-1]:
                         head_nod_dir.append(nod)
                         head_nod_idxs.append(img_ind)
+                        # print("!!!!!!", head_nod_dir, head_nod_idxs)
+
                     else:
                         continue
 
@@ -164,16 +185,24 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                     if nod != head_nod_dir[-1]:
                         head_nod_dir.append(nod)
                         head_nod_idxs.append(img_ind)
+                        # print("@@@@@@@", head_nod_dir, head_nod_idxs)
+
                     else:
                         continue
 
             else:
                 if head_nod_idxs[-1] - head_nod_idxs[0] < 50:
                     text = "HEAD NOD"
+                    # last_img_ind = img_ind
+                    # print("HEAD NOD")
+                    # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+                    # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
                     nod = ""
                     head_nod_dir = []
                     head_nod_idxs = []
                 else:
+                    # print("starting again")
+                    # print("?????????????????????????????????????????????????")
                     nod = ""
                     head_nod_dir = []
                     head_nod_idxs = []
@@ -181,10 +210,15 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         except:
             pass
 
+        # mp_drawing.draw_landmarks(
+        #     image, results.face_landmarks, mp_holistic.FACEMESH_CONTOURS) # FACEMESH_CONTOURS FACEMESH_TESSELATION
+        # mp_drawing.draw_landmarks(
+        #     image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
+        # mp_drawing.draw_landmarks(
+        #     image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
         mp_drawing.draw_landmarks(
             image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
 
-        # print("Text before drawing:", text)
         cv2.putText(image, text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
 
         cv2.imshow('MediaPipe Holistic', image)
