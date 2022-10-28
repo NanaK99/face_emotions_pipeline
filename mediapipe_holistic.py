@@ -1,7 +1,6 @@
 import cv2
 import mediapipe as mp
 from scipy.spatial import distance as dist
-import copy
 
 
 mp_drawing = mp.solutions.drawing_utils
@@ -30,8 +29,6 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
     img_ind = 0
     turn = ""
     nod = ""
-    # text = ""
-    # last_img_ind = 0
 
     while cap.isOpened():
 
@@ -50,136 +47,144 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        # LEAN IN and LEAN OUT
-        try:
-            landmarks = results.pose_landmarks.landmark
-            eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
-            eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
-            eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
-            eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
-            eyeR_len = dist.euclidean([eyeR_inner.x, eyeR_inner.y], [eyeR_outer.x, eyeR_outer.y])
-            eyeL_len = dist.euclidean([eyeL_inner.x, eyeL_inner.y], [eyeL_outer.x, eyeL_outer.y])
-            print(eyeL_len, eyeR_len)
-            if eyeR_len > 0.06 and eyeL_len > 0.06:
-                text = "LEAN IN"
-            elif eyeR_len < 0.05 and eyeL_len < 0.05:
-                text = "LEAN OUT"
-            else:
-                text = ""
+        landmarks = results.pose_landmarks.landmark
 
-        except:
-            pass
+        # LEAN IN and LEAN OUT
+        if len(text) == 0:
+            try:
+                eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
+                eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
+                eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
+                eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
+                eyeR_len = dist.euclidean([eyeR_inner.x, eyeR_inner.y], [eyeR_outer.x, eyeR_outer.y])
+                eyeL_len = dist.euclidean([eyeL_inner.x, eyeL_inner.y], [eyeL_outer.x, eyeL_outer.y])
+                if eyeR_len > 0.06 and eyeL_len > 0.06:
+                    text = "LEAN IN"
+                elif eyeR_len < 0.05 and eyeL_len < 0.05:
+                    text = "LEAN OUT"
+                else:
+                    text = ""
+
+            except:
+                pass
 
         # HEAD SHAKE
-        try:
-            landmarks = results.pose_landmarks.landmark
-            earL = landmarks[mp_holistic.PoseLandmark.LEFT_EAR.value]
-            earR = landmarks[mp_holistic.PoseLandmark.RIGHT_EAR.value]
-            eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
-            eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
-            right_to_left_ratio = get_aspect_ratio(earR, eyeR_outer, earL, eyeL_outer)
+        if len(text) == 0:
+            try:
+                earL = landmarks[mp_holistic.PoseLandmark.LEFT_EAR.value]
+                earR = landmarks[mp_holistic.PoseLandmark.RIGHT_EAR.value]
+                eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
+                eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
+                right_to_left_ratio = get_aspect_ratio(earR, eyeR_outer, earL, eyeL_outer)
 
-            mouthR = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
-            mouthL = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
-            mouth_len = dist.euclidean([mouthR.x, mouthR.y], [mouthL.x, mouthL.y])
+                mouthR = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
+                mouthL = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
+                mouth_len = dist.euclidean([mouthR.x, mouthR.y], [mouthL.x, mouthL.y])
 
+                if len(head_shake_dir) < 3:
 
-            if len(head_shake_dir) < 3:
+                    if len(turn) == 0:
+                        if right_to_left_ratio > 1.3:
+                            turn = "right"
+                            head_shake_dir.append(turn)
+                            img_idxs.append(img_ind)
+                        elif right_to_left_ratio < 0.7:
+                            turn = "left"
+                            head_shake_dir.append(turn)
+                            img_idxs.append(img_ind)
 
-                if len(turn) == 0:
-                    if right_to_left_ratio > 1.3:
+                    elif right_to_left_ratio > 1.3:
                         turn = "right"
-                        head_shake_dir.append(turn)
-                        img_idxs.append(img_ind)
+                        if turn != head_shake_dir[-1]:
+                            head_shake_dir.append(turn)
+                            img_idxs.append(img_ind)
+                        else:
+                            continue
+
                     elif right_to_left_ratio < 0.7:
                         turn = "left"
-                        head_shake_dir.append(turn)
-                        img_idxs.append(img_ind)
+                        if turn != head_shake_dir[-1]:
+                            head_shake_dir.append(turn)
+                            img_idxs.append(img_ind)
+                        else:
+                            continue
 
-                elif right_to_left_ratio > 1.3:
-                    turn = "right"
-                    if turn != head_shake_dir[-1]:
-                        head_shake_dir.append(turn)
-                        img_idxs.append(img_ind)
-                    else:
-                        continue
-
-                elif right_to_left_ratio < 0.7:
-                    turn = "left"
-                    if turn != head_shake_dir[-1]:
-                        head_shake_dir.append(turn)
-                        img_idxs.append(img_ind)
-                    else:
-                        continue
-
-            else:
-                if img_idxs[-1] - img_idxs[0] < 50:
-                    text = "HEAD SHAKE"
-                    turn = ""
-                    head_shake_dir = []
-                    img_idxs = []
                 else:
-                    turn = ""
-                    head_shake_dir = []
-                    img_idxs = []
+                    if img_idxs[-1] - img_idxs[0] < 50:
+                        text = "HEAD SHAKE"
+                        turn = ""
+                        head_shake_dir = []
+                        img_idxs = []
+                    else:
+                        turn = ""
+                        head_shake_dir = []
+                        img_idxs = []
 
-        except:
-            pass
+            except:
+                pass
 
         #HEAD NOD
-        try:
-            landmarks = results.pose_landmarks.landmark
-            eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
-            eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
-            eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
-            eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
-            nodR_inner_ratio = 1 / eyeR_inner.z
-            nodR_outer_ratio = 1 / eyeR_outer.z
-            nodL_inner_ratio = 1 / eyeL_inner.z
-            nodL_outer_ratio = 1 / eyeL_outer.z
+        if len(text) == 0:
+            try:
+                eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
+                eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
+                eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
+                eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
+                nodR_inner_ratio = 1 / eyeR_inner.z
+                nodR_outer_ratio = 1 / eyeR_outer.z
+                nodL_inner_ratio = 1 / eyeL_inner.z
+                nodL_outer_ratio = 1 / eyeL_outer.z
 
-            if len(head_nod_dir) < 3:
-                if len(nod) == 0:
+                if len(head_nod_dir) < 3:
+                    if len(nod) == 0:
 
-                    if abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
+                        if abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
+                            nod = "down"
+                            head_nod_dir.append(nod)
+                            head_nod_idxs.append(img_ind)
+
+                        elif abs(nodR_inner_ratio) < 0.27 and abs(nodR_inner_ratio) < 0.27:
+                            nod = "up"
+                            head_nod_dir.append(nod)
+                            head_nod_idxs.append(img_ind)
+
+                    elif abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
                         nod = "down"
-                        head_nod_dir.append(nod)
-                        head_nod_idxs.append(img_ind)
+                        if nod != head_nod_dir[-1]:
+                            head_nod_dir.append(nod)
+                            head_nod_idxs.append(img_ind)
+                        else:
+                            continue
 
                     elif abs(nodR_inner_ratio) < 0.27 and abs(nodR_inner_ratio) < 0.27:
                         nod = "up"
-                        head_nod_dir.append(nod)
-                        head_nod_idxs.append(img_ind)
+                        if nod != head_nod_dir[-1]:
+                            head_nod_dir.append(nod)
+                            head_nod_idxs.append(img_ind)
+                        else:
+                            continue
 
-                elif abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
-                    nod = "down"
-                    if nod != head_nod_dir[-1]:
-                        head_nod_dir.append(nod)
-                        head_nod_idxs.append(img_ind)
-                    else:
-                        continue
-
-                elif abs(nodR_inner_ratio) < 0.27 and abs(nodR_inner_ratio) < 0.27:
-                    nod = "up"
-                    if nod != head_nod_dir[-1]:
-                        head_nod_dir.append(nod)
-                        head_nod_idxs.append(img_ind)
-                    else:
-                        continue
-
-            else:
-                if head_nod_idxs[-1] - head_nod_idxs[0] < 50:
-                    text = "HEAD NOD"
-                    nod = ""
-                    head_nod_dir = []
-                    head_nod_idxs = []
                 else:
-                    nod = ""
-                    head_nod_dir = []
-                    head_nod_idxs = []
+                    if head_nod_idxs[-1] - head_nod_idxs[0] < 50:
+                        text = "HEAD NOD"
+                        nod = ""
+                        head_nod_dir = []
+                        head_nod_idxs = []
+                    else:
+                        nod = ""
+                        head_nod_dir = []
+                        head_nod_idxs = []
 
-        except:
-            pass
+            except:
+                pass
+
+        # SHOULDER MOVEMENT
+        if len(text) == 0:
+            try:
+                shoulderL = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+                shoulderR = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+            except:
+                pass
 
         mp_drawing.draw_landmarks(
             image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
