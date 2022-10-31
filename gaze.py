@@ -89,32 +89,48 @@ def gaze(frame, points):
 
     if transformation is not None:  # if estimateAffine3D secsseded
         # project pupil image point into 3d world point
-        pupil_world_cord = transformation @ np.array([[left_pupil[0], left_pupil[1], 0, 1]]).T
+        pupil_world_cord_left = transformation @ np.array([[left_pupil[0], left_pupil[1], 0, 1]]).T
+        pupil_world_cord_right = transformation @ np.array([[right_pupil[0], right_pupil[1], 0, 1]]).T
 
         # 3D gaze point (10 is arbitrary value denoting gaze distance)
-        S = Eye_ball_center_left + (pupil_world_cord - Eye_ball_center_left) * 10
+        S_left = Eye_ball_center_left + (pupil_world_cord_left - Eye_ball_center_left) * 10
+        S_right = Eye_ball_center_right + (pupil_world_cord_right - Eye_ball_center_right) * 10
 
         # Project a 3D gaze direction onto the image plane.
-        (eye_pupil2D, _) = cv2.projectPoints((int(S[0]), int(S[1]), int(S[2])), rotation_vector,
+        (eye_pupil2D_left, _) = cv2.projectPoints((int(S_left[0]), int(S_left[1]), int(S_left[2])), rotation_vector,
+                                             translation_vector, camera_matrix, dist_coeffs)
+        (eye_pupil2D_right, _) = cv2.projectPoints((int(S_right[0]), int(S_right[1]), int(S_right[2])), rotation_vector,
                                              translation_vector, camera_matrix, dist_coeffs)
 
         # project 3D head pose into the image plane
-        (head_pose, _) = cv2.projectPoints((int(pupil_world_cord[0]), int(pupil_world_cord[1]), int(40)),
+        (head_pose_left, _) = cv2.projectPoints((int(pupil_world_cord_left[0]), int(pupil_world_cord_left[1]), int(40)),
+                                           rotation_vector,
+                                           translation_vector, camera_matrix, dist_coeffs)
+
+        (head_pose_right, _) = cv2.projectPoints((int(pupil_world_cord_right[0]), int(pupil_world_cord_right[1]), int(40)),
                                            rotation_vector,
                                            translation_vector, camera_matrix, dist_coeffs)
 
         # correct gaze for head rotation
-        gaze = left_pupil + (eye_pupil2D[0][0] - left_pupil) - (head_pose[0][0] - left_pupil)
+        gaze_left = left_pupil + (eye_pupil2D_left[0][0] - left_pupil) - (head_pose_left[0][0] - left_pupil)
+        gaze_right = right_pupil + (eye_pupil2D_right[0][0] - right_pupil) - (head_pose_right[0][0] - right_pupil)
+
+        gaze = (gaze_left + gaze_right) / 2
 
         # Draw gaze line into screen
-        p1 = (int(left_pupil[0]), int(left_pupil[1]))
+        p1_left = (int(left_pupil[0]), int(left_pupil[1]))
+        # p2_left = (int(gaze_left[0]), int(gaze_left[1]))
+
+        p1_right = (int(right_pupil[0]), int(right_pupil[1]))
+        # p2_right = (int(gaze_right[0]), int(gaze_right[1]))
+
         p2 = (int(gaze[0]), int(gaze[1]))
 
         p3 = (150, 400)
         p4 = (550, 400)
 
         try:
-            m1 = (p2[1] - p1[1]) / (p2[0] - p1[0])
+            m1 = (p2[1] - p1_left[1]) / (p2[0] - p1_left[0])
             m2 = (p4[1] - p3[1]) / (p4[0] - p3[0])
 
             angle = findAngle(m1, m2)
@@ -141,8 +157,11 @@ def gaze(frame, points):
         except:
             pass
 
-        cv2.line(frame, p1, p2, (0, 0, 255), 2)
+        cv2.line(frame, p1_left, p2, (0, 0, 255), 2)
+        cv2.line(frame, p1_right, p2, (0, 0, 255), 2)
 
-        return text
+        print("text", text)
+
+        # return text
 
 
