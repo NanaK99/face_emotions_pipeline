@@ -28,9 +28,10 @@ with mp_face_mesh.FaceMesh(
 
         # ADDED
 
-        # cv2.putText(image, text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
+        cv2.putText(image, text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
 
         cv2.imshow('output window', image)
         if cv2.waitKey(2) & 0xFF == 27:
             break
+
 cap.release()
