@@ -1,6 +1,6 @@
-import face_visible_expressions_pipeline
-import gaze_estimator_pipeline
-import mediapipe_holistic_pipeline
+import face_visible_expressions
+import gaze_estimator
+import mediapipe_holistic
 import cv2
 
 
@@ -24,12 +24,9 @@ while cap.isOpened():
     img.flags.writeable = False
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
 
-    final_text += gaze_estimator_pipeline.get_gaze_direction(img)
+    final_text += gaze_estimator.get_gaze_direction(img)
 
-    body_mov = mediapipe_holistic_pipeline.get_body_movement(img)
-    # print("IND", img_ind)
-    # print("BODY MOV",body_mov, img_ind)
-    # if isinstance(body_mov, tuple):
+    body_mov = mediapipe_holistic.get_body_movement(img)
 
     if body_mov in ["up", "down", "right", "left"]:
         if body_mov == "left" or body_mov == "right":
@@ -68,12 +65,11 @@ while cap.isOpened():
                 else:
                     head_nod_idxs = []
                     head_nod_dir = []
-        # print("HEAD NOD", head_nod_idxs, head_nod_dir)
 
     else:
         final_text += body_mov
 
-    final_text += face_visible_expressions_pipeline.get_face_expression(img)
+    final_text += face_visible_expressions.get_face_expression(img)
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
