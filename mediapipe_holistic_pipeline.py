@@ -17,9 +17,7 @@ def get_body_movement(image):
     with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) \
             as holistic:
 
-        img_ind = 0
-        turn = ""
-        nod = ""
+        text = ""
 
         # Process the image and detect the holistic
         results = holistic.process(image)
@@ -36,38 +34,40 @@ def get_body_movement(image):
             eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
             eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
             eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
-            eyeR_len = dist.euclidean([eyeR_inner.x, eyeR_inner.y], [eyeR_outer.x, eyeR_outer.y])
-            eyeL_len = dist.euclidean([eyeL_inner.x, eyeL_inner.y], [eyeL_outer.x, eyeL_outer.y])
-            if eyeR_len > 0.06 and eyeL_len > 0.06:
-                text = ", LEAN IN, "
-            elif eyeR_len < 0.05 and eyeL_len < 0.05:
-                text = ", LEAN OUT, "
-            else:
-                text = ""
+            if eyeR_inner.z < -3 and eyeR_outer.z < -3 and eyeL_inner.z < -3 and eyeL_outer.z < -3:
+                text = "LEAN IN, "
+            elif eyeR_inner.z > -1 and eyeR_outer.z > -1 and eyeL_inner.z > -1 and eyeL_outer.z > -1:
+                text = "LEAN OUT, "
 
-            return text
+            if len(text) != 0:
+                return text
 
         except:
             pass
 
         # HEAD SHAKE
-        try:
-            earL = landmarks[mp_holistic.PoseLandmark.LEFT_EAR.value]
-            earR = landmarks[mp_holistic.PoseLandmark.RIGHT_EAR.value]
-            eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
-            eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
-            right_to_left_ratio = get_aspect_ratio(earR, eyeR_outer, earL, eyeL_outer)
+        if len(text) == 0:
+            try:
+                earL = landmarks[mp_holistic.PoseLandmark.LEFT_EAR.value]
+                earR = landmarks[mp_holistic.PoseLandmark.RIGHT_EAR.value]
+                eyeR_outer = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_OUTER.value]
+                eyeL_outer = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_OUTER.value]
+                right_to_left_ratio = get_aspect_ratio(earR, eyeR_outer, earL, eyeL_outer)
 
-            if right_to_left_ratio > 1.3:
-                turn = "right"
+                if right_to_left_ratio < 0.9:
+                    text = "right"
+                else:
+                    text = "left"
 
-            elif right_to_left_ratio < 0.7:
-                turn = "left"
+                # return turn
+                if len(text) != 0:
+                    return text
 
-            return turn, img_ind
+            except:
+                pass
 
-        except:
-            pass
+        else:
+            return text
 
         #HEAD NOD
         try:
@@ -76,13 +76,13 @@ def get_body_movement(image):
             nodR_inner_ratio = 1 / eyeR_inner.z
             nodL_inner_ratio = 1 / eyeL_inner.z
 
-            if abs(nodL_inner_ratio) > 0.33 and abs(nodR_inner_ratio) > 0.33:
-                nod = "down"
+            if nodL_inner_ratio < -0.6 and nodR_inner_ratio < -0.6:
+                text = "up"
+            else:
+                text = "down"
 
-            elif abs(nodR_inner_ratio) < 0.27 and abs(nodR_inner_ratio) < 0.27:
-                nod = "up"
-
-            return nod, img_ind
+            if len(text) != 0:
+                return text
 
         except:
             pass
@@ -94,4 +94,8 @@ def get_body_movement(image):
         except:
             pass
 
-        return text
+        # print("text before returning", text)
+        if len(text) == 0:
+            return "NO BODY MOVEMENT, "
+        else:
+            return text

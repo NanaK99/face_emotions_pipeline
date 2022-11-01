@@ -119,40 +119,28 @@ def gaze(frame, points):
 
         # Draw gaze line into screen
         p1_left = (int(left_pupil[0]), int(left_pupil[1]))
-        # p2_left = (int(gaze_left[0]), int(gaze_left[1]))
-
         p1_right = (int(right_pupil[0]), int(right_pupil[1]))
-        # p2_right = (int(gaze_right[0]), int(gaze_right[1]))
 
         p2 = (int(gaze[0]), int(gaze[1]))
 
-        p3 = (150, 400)
-        p4 = (550, 400)
-
         try:
-            m1 = (p2[1] - p1_left[1]) / (p2[0] - p1_left[0])
-            m2 = (p4[1] - p3[1]) / (p4[0] - p3[0])
-
-            angle = findAngle(m1, m2)
-
-            if angle < 45:
-                if gaze[0] < 160 and gaze[1] > 190:
-                    text = "DOWN RIGHT"
-                if gaze[0] < 160 and gaze[1] < 190:
-                    text = "UP RIGHT"
-                if gaze[0] > 340 and gaze[1] > 200:
-                    text = "DOWN LEFT"
-                if gaze[0] > 340 and gaze[1] < 200:
-                    text = "UP LEFT"
-                if gaze[0] < 270 and gaze[0] > 200 and gaze[1] < 200:
-                    text = "CENTRE"
-                if gaze[0] < 280 and gaze[0] > 210 and gaze[1] > 230:
-                    text = "DOWN CENTRE"
+            if gaze[0] > 800:
+                if gaze[1] < 300:
+                    text = "UP LEFT, "
+                elif gaze[1] > 300:
+                    text = "DOWN LEFT, "
+            elif gaze[0] < 570:
+                if gaze[1] < 200:
+                    text = "UP RIGHT, "
+                elif gaze[1] > 250:
+                    text = "DOWN RIGHT, "
             else:
-                if angle > 60:
-                    text = "CENTRE"
+                if gaze[1] < 200:
+                    text = "UP CENTRE, "
+                elif gaze[1] > 275 and gaze[0] < 665:
+                    text = "CENTRE, "
                 else:
-                    text = "UP CENTRE"
+                    text = "DOWN CENTRE, "
 
         except:
             pass
@@ -160,8 +148,6 @@ def gaze(frame, points):
         cv2.line(frame, p1_left, p2, (0, 0, 255), 2)
         cv2.line(frame, p1_right, p2, (0, 0, 255), 2)
 
-        print("text", text)
-
-        # return text
+        return text
 
 
