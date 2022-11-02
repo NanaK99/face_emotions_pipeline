@@ -14,6 +14,7 @@ def findAngle(M1, M2):
 
 
 def gaze(frame, points):
+    text = ""
     """
     The gaze function gets an image and face landmarks from mediapipe framework.
     The function draws the gaze direction into the frame.
@@ -145,9 +146,9 @@ def gaze(frame, points):
         except:
             pass
 
-        cv2.line(frame, p1_left, p2, (0, 0, 255), 2)
-        cv2.line(frame, p1_right, p2, (0, 0, 255), 2)
-
-        return text
+        if len(text) != 0:
+            return text
+        else:
+            return ""
 
 

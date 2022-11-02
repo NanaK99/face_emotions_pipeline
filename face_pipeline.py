@@ -24,7 +24,9 @@ while cap.isOpened():
     img.flags.writeable = False
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
 
-    final_text += gaze_estimator.get_gaze_direction(img)
+    gaze = gaze_estimator.get_gaze_direction(img)
+    if gaze is not None:
+        final_text += gaze_estimator.get_gaze_direction(img)
 
     body_mov = mediapipe_holistic.get_body_movement(img)
 
@@ -69,7 +71,9 @@ while cap.isOpened():
     else:
         final_text += body_mov
 
-    final_text += face_visible_expressions.get_face_expression(img)
+    face_expr = face_visible_expressions.get_face_expression(img)
+    if face_expr is not None:
+        final_text += face_expr
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
