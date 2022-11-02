@@ -56,8 +56,10 @@ def get_body_movement(image):
 
                 if right_to_left_ratio < 0.9:
                     text = "right"
-                else:
+                elif right_to_left_ratio > 2:
                     text = "left"
+                else:
+                    text = ""
 
                 # return turn
                 if len(text) != 0:
@@ -70,22 +72,29 @@ def get_body_movement(image):
             return text
 
         #HEAD NOD
-        try:
-            eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
-            eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
-            nodR_inner_ratio = 1 / eyeR_inner.z
-            nodL_inner_ratio = 1 / eyeL_inner.z
+        if len(text) == 0:
+            try:
+                eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
+                eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
+                nodR_inner_ratio = 1 / eyeR_inner.z
+                nodL_inner_ratio = 1 / eyeL_inner.z
 
-            if nodL_inner_ratio < -0.6 and nodR_inner_ratio < -0.6:
-                text = "up"
-            else:
-                text = "down"
+                if nodL_inner_ratio < -0.6 and nodR_inner_ratio < -0.6:
+                    text = "up"
+                elif nodL_inner_ratio > -0.5 and nodR_inner_ratio > -0.5:
+                    text = "down"
+                else:
+                    text = ""
 
-            if len(text) != 0:
-                return text
+                if len(text) != 0:
+                    return text
 
-        except:
-            pass
+            except:
+                pass
+        else:
+            return text
+
+
 
         # SHOULDER MOVEMENT
         try:
