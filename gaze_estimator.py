@@ -7,6 +7,7 @@ mp_face_mesh = mp.solutions.face_mesh  # initialize the face mesh model
 
 
 def get_gaze_direction(image):
+    text = ""
     with mp_face_mesh.FaceMesh(
             max_num_faces=1,  # number of faces to track in each frame
             refine_landmarks=True,  # includes iris landmarks in the face mesh model

@@ -37,6 +37,9 @@ def get_face_expression(image):
 
         text = ""
 
+        if results.multi_face_landmarks is None:
+            return text
+
         if results.multi_face_landmarks and len(results.multi_face_landmarks) > 0:
             face_landmarks = results.multi_face_landmarks[0]
             face = face_landmarks.landmark
@@ -50,16 +53,20 @@ def get_face_expression(image):
 
             if cheek_mid_right.x < face_mid_right.x:
                 text = "HEAD TURN RIGHT"
+                return text
 
             elif cheek_mid_left.x > face_mid_left.x:
                 text = "HEAD TURN LEFT"
+                return text
 
             face_angle = (face_mid_top.x - face_mid_bottom.x) / (
                     face_mid_right.x - face_mid_left.x)
             if face_angle > FACE_TILT:
                 text = "HEAD TILT RIGHT"
+                return text
             elif face_angle < -FACE_TILT:
                 text = "HEAD TILT LEFT"
+                return text
 
             # Narrowed eyes and furrowed brows
             eyeR_top = face[159]
@@ -86,12 +93,15 @@ def get_face_expression(image):
 
             if eyeR_ar < EYE_OPEN_HEIGHT and eyeL_ar < EYE_OPEN_HEIGHT:
                 text = "NARROWED EYES"
+                return text
 
             if brow_eyeL_inner_dist < FURROWED_BROWS and brow_eyeR_inner_dist < FURROWED_BROWS:
                 if eyeA_ar > 0.15:
                     text = "FURROWED BROWS"
+                    return text
                 else:
                     text = "NARROWED EYES"
+                    return text
 
             # Brows, widened eyes and tense
             browR_top = face[52]
@@ -116,18 +126,23 @@ def get_face_expression(image):
             if eyeA_ar > 0.7:
                 if brows_avg_raise > BROWS_RAISE and eyeA_ar > EYE_OPEN_HEIGHT:
                     text = "WIDENED EYES"
+                    return text
                 else:
                     text = "TENSE"
+                    return text
             else:
                 if brows_avg_raise > BROWS_RAISE and eyeA_ar > EYE_OPEN_HEIGHT:
                     text = "BROWS RAISED"
+                    return text
 
             brows_relative_raise = browR_eyeR_dist - browL_eyeL_dist
 
             if brows_relative_raise < BROW_RAISE_LEFT:
                 text = "LEFT BROW RAISED"
+                return text
             elif brows_relative_raise > BROW_RAISE_RIGHT:
                 text = "RIGHT BROW RAISED"
+                return text
 
             # Smile
             mouth_outer_right = face[76]
@@ -138,8 +153,8 @@ def get_face_expression(image):
 
             if mouth_face_dist_ratio < 0.21:
                 text = "SMILING"
+                return text
 
             if len(text) == 0:
                 text = "NEUTRAL"
-
-        return text
+                return text

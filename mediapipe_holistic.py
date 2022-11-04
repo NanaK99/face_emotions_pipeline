@@ -25,6 +25,8 @@ def get_body_movement(image):
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
+        if results.pose_landmarks is None:
+            return text
 
         landmarks = results.pose_landmarks.landmark
 
@@ -35,9 +37,9 @@ def get_body_movement(image):
             eyeR_inner = landmarks[mp_holistic.PoseLandmark.RIGHT_EYE_INNER.value]
             eyeL_inner = landmarks[mp_holistic.PoseLandmark.LEFT_EYE_INNER.value]
             if eyeR_inner.z < -3 and eyeR_outer.z < -3 and eyeL_inner.z < -3 and eyeL_outer.z < -3:
-                text = "LEAN IN, "
+                text = "LEAN IN"
             elif eyeR_inner.z > -1 and eyeR_outer.z > -1 and eyeL_inner.z > -1 and eyeL_outer.z > -1:
-                text = "LEAN OUT, "
+                text = "LEAN OUT"
 
             if len(text) != 0:
                 return text
@@ -105,6 +107,6 @@ def get_body_movement(image):
 
         # print("text before returning", text)
         if len(text) == 0:
-            return "NO BODY MOVEMENT, "
+            return "NO BODY MOVEMENT"
         else:
             return text

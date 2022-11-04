@@ -119,29 +119,29 @@ def gaze(frame, points):
         gaze = (gaze_left + gaze_right) / 2
 
         # Draw gaze line into screen
-        p1_left = (int(left_pupil[0]), int(left_pupil[1]))
-        p1_right = (int(right_pupil[0]), int(right_pupil[1]))
-
-        p2 = (int(gaze[0]), int(gaze[1]))
+        # p1_left = (int(left_pupil[0]), int(left_pupil[1]))
+        # p1_right = (int(right_pupil[0]), int(right_pupil[1]))
+        #
+        # p2 = (int(gaze[0]), int(gaze[1]))
 
         try:
             if gaze[0] > 800:
                 if gaze[1] < 300:
-                    text = "UP LEFT, "
+                    text = "UP LEFT"
                 elif gaze[1] > 300:
-                    text = "DOWN LEFT, "
+                    text = "DOWN LEFT"
             elif gaze[0] < 570:
                 if gaze[1] < 200:
-                    text = "UP RIGHT, "
+                    text = "UP RIGHT"
                 elif gaze[1] > 250:
-                    text = "DOWN RIGHT, "
+                    text = "DOWN RIGHT"
             else:
                 if gaze[1] < 200:
-                    text = "UP CENTRE, "
+                    text = "UP CENTRE"
                 elif gaze[1] > 275 and gaze[0] < 665:
-                    text = "CENTRE, "
+                    text = "CENTRE"
                 else:
-                    text = "DOWN CENTRE, "
+                    text = "DOWN CENTRE"
 
         except:
             pass
