@@ -32,22 +32,31 @@ while cap.isOpened():
     face_expr = face_visible_expressions.get_face_expression(img)
     if face_expr is not None:
         faceexpr_text += face_expr
+    else:
+        faceexpr_text = ""
 
     if gazee is not None:
         p1_left = gazee[0]
         p1_right = gazee[1]
         p2 = gazee[2]
         gaze_text = gazee[3]
+        # print("####", p1_right, p1_left, p2, gaze_text)
 
         cv2.line(img, p1_left, p2, (0, 0, 255), 2)
         cv2.line(img, p1_right, p2, (0, 0, 255), 2)
     else:
         gaze_text = ""
 
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
     final_text = f"{gaze_text}, {faceexpr_text}"
+
     cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
     cv2.imshow('Recording...', img)
     out.write(img)
+
+    gaze_text = ""
+    faceexpr_text = ""
     final_text = ""
 
 

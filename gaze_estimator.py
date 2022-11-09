@@ -18,6 +18,11 @@ def get_gaze_direction(image):
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # frame back to BGR for OpenCV
 
         if results.multi_face_landmarks:
-            text = gaze.gaze(image, results.multi_face_landmarks[0])  # gaze estimation
+            gaze_all = gaze.gaze(image, results.multi_face_landmarks[0])
+            if gaze_all is not None:  # gaze estimation
+                return gaze_all
+            else:
+                return None
+        else:
+            return None
 
-        return text

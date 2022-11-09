@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from helpers import relative, relativeT
-from scipy.spatial import distance as dist
 from math import atan
 
 
@@ -119,36 +118,42 @@ def gaze(frame, points):
         gaze = (gaze_left + gaze_right) / 2
 
         # Draw gaze line into screen
-        # p1_left = (int(left_pupil[0]), int(left_pupil[1]))
-        # p1_right = (int(right_pupil[0]), int(right_pupil[1]))
-        #
-        # p2 = (int(gaze[0]), int(gaze[1]))
+        p1_left = (int(left_pupil[0]), int(left_pupil[1]))
+        p1_right = (int(right_pupil[0]), int(right_pupil[1]))
+
+        p2 = (int(gaze[0]), int(gaze[1]))
 
         try:
-            if gaze[0] > 800:
-                if gaze[1] < 300:
-                    text = "UP LEFT"
-                elif gaze[1] > 300:
-                    text = "DOWN LEFT"
-            elif gaze[0] < 570:
-                if gaze[1] < 200:
-                    text = "UP RIGHT"
-                elif gaze[1] > 250:
-                    text = "DOWN RIGHT"
-            else:
-                if gaze[1] < 200:
-                    text = "UP CENTRE"
-                elif gaze[1] > 275 and gaze[0] < 665:
-                    text = "CENTRE"
+            if gaze[0] < 700:
+                if gaze[0] < 550:
+                    if gaze[1] < 340:
+                        text = "UP RIGHT"
+                    elif gaze[1] > 400:
+                        text = "DOWN RIGHT"
+                    else:
+                        text = "CENTRE RIGHT"
                 else:
-                    text = "DOWN CENTRE"
+                    if gaze[1] > 320:
+                        text = "DOWN CENTRE"
+                    elif gaze[1] < 280:
+                        text = "UP CENTRE"
+                    else:
+                        text = "STRAIGHT CENTRE"
+
+            else:
+                if gaze[1] < 290:
+                    text = "UP LEFT"
+                elif gaze[1] > 330:
+                    text = "DOWN LEFT"
+                else:
+                    text = "CENTRE LEFT"
 
         except:
             pass
 
         if len(text) != 0:
-            return text
+            return p1_left, p1_right, p2, text
         else:
-            return ""
+            return None
 
 
