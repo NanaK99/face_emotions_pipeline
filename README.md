@@ -21,7 +21,7 @@ pip3 install -r requirements.txt
 ```
 5. Run: 
 ```
-python face_pipeline_with_emotions.py 
+python face_pipeline.py 
 ```
 
 The latter command will read frames from the video path and output four different TextGrid files: 
