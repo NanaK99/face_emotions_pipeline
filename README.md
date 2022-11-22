@@ -2,11 +2,18 @@
 ```
 git clone https://github.com/MagicalLabs/face_emotions_pipeline.git
 ```
-2. In the folder face_emotions_pipeline, run:
+2. In the folder face_emotions_pipeline:
 ```
-git clone https://github.com/yaoing/DAN.git
+mkdir checkpoints
 ```
-3. Create a new directory, named *checkpoints*, in the DAN directory and from the repo (of the 2nd step) download the pre-trained model weights. Currently, weights named *AffectNet-8* are used, you can use any one from the available three optoins.
+3. Download one of the pre-trained model weights to the *checkpoints* directory. Currently, weights named *AffectNet-8* are used, you can use any one from the available three optoins.
+
+|     task    	| epochs 	| accuracy 	| link 	|
+|:-----------:	|:------:	|:--------:	|:----:	|
+| AffectNet-8 	|    5   	| 62.09    	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)      	|
+| AffectNet-7 	|    6    	| 65.69     |[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)  
+|    RAF-DB   	|   21   	| 89.70    	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)
+
 
 4. In the face_emotions_pipeline directory, run: 
 ```
