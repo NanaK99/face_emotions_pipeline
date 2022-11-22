@@ -1,17 +1,18 @@
-import face_visible_expressions
-import gaze_estimator
-import mediapipe_face
-import mediapipe_shoulders
+from face_expr_detection import face_visible_expressions
+from gaze_detection import gaze_estimator
+from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
+from emotion_detection import inference
 
 import cv2
 from collections import Counter
 from praatio import tgio
 import numpy as np
-from DAN import inference
+import os
+
 
 video_path = "vid.mp4"
 cap = cv2.VideoCapture(video_path)
-tg = tgio.openTextgrid("trott.TextGrid")
+tg = tgio.openTextgrid("./static/trott.TextGrid")
 fps = cap.get(cv2.CAP_PROP_FPS)
 font = cv2.FONT_HERSHEY_SIMPLEX
 model = inference.Model()
@@ -195,7 +196,16 @@ while cap.isOpened():
 
                         gaze_label = most_common_gaze
                         expression_label = most_common_face_expr
-                        body_label = f"{most_common_head_move}, {most_common_body_move}"
+
+                        if len(most_common_body_move) == 0 and len(most_common_head_move) == 0:
+                            body_label = ""
+                        elif len(most_common_body_move) == 0 and len(most_common_head_move) !=0:
+                            body_label = most_common_head_move
+                        elif len(most_common_head_move) == 0 and len(most_common_body_move) != 0:
+                            body_label = most_common_body_move
+                        else:
+                            body_label = f"{most_common_head_move}, {most_common_body_move}"
+
                         emotion_label = most_common_emotion
                         if emotion_label == "null":
                             emotion_label = ""
@@ -225,10 +235,14 @@ while cap.isOpened():
         tg_body.addTier(body_tier)
         tg_emotion.addTier(emotion_tier)
 
-        gaze_output_file_path = 'gaze_output.TextGrid'
-        expr_output_file_path = 'expr_output.TextGrid'
-        body_output_file_path = 'body_output.TextGrid'
-        emotion_output_file_path = 'emotion_output.TextGrid'
+        directory_path = "./output_textgrids/"
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+
+        gaze_output_file_path = os.path.join(directory_path, 'gaze_output.TextGrid')
+        expr_output_file_path = os.path.join(directory_path, 'expr_output.TextGrid')
+        body_output_file_path = os.path.join(directory_path, 'body_output.TextGrid')
+        emotion_output_file_path = os.path.join(directory_path, 'emotion_output.TextGrid')
 
         tg_gaze.save(gaze_output_file_path, useShortForm=False)
         tg_expr.save(expr_output_file_path, useShortForm=False)

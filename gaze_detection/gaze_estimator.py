@@ -1,6 +1,6 @@
 import mediapipe as mp
 import cv2
-import gaze
+import gaze_detection.gaze as gaze
 import argparse
 
 

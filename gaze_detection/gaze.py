@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from helpers import relative, relativeT
+from gaze_detection.helpers import relative, relativeT
 from scipy.spatial import distance as dist
 from math import atan
 
