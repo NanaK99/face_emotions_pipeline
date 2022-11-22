@@ -210,8 +210,6 @@ while cap.isOpened():
                         if emotion_label == "null":
                             emotion_label = ""
 
-                        # label = label + f", {most_common_gaze}, {most_common_head_move}, {most_common_body_move}, {most_common_face_expr}"
-                        # print("label", label)
                         gaze_entrylist.append((start, end, gaze_label))
                         expr_entrylist.append((start, end, expression_label))
                         body_entrylist.append((start, end, body_label))
