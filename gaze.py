@@ -118,37 +118,62 @@ def gaze(frame, points):
 
         gaze = (gaze_left + gaze_right) / 2
 
-        # Draw gaze line into screen
+        ### FOR MAC WEBCAM
+        # try:
+        #     if gaze[0] > 800:
+        #         if gaze[1] < 300:
+        #             text = "UP LEFT"
+        #         elif gaze[1] > 300:
+        #             text = "DOWN LEFT"
+        #     elif gaze[0] < 570:
+        #         if gaze[1] < 200:
+        #             text = "UP RIGHT"
+        #         elif gaze[1] > 250:
+        #             text = "DOWN RIGHT"
+        #     else:
+        #         if gaze[1] < 200:
+        #             text = "UP CENTRE"
+        #         elif gaze[1] > 275 and gaze[0] < 665:
+        #             text = "CENTRE"
+        #         else:
+        #             text = "DOWN CENTRE"
+        #
+        # except:
+        #     pass
+
+        ### FOR Trott_Garner_Miranda_LG_2022_-_Audio2_new video
+        try:
+            if gaze[0] > 300 and gaze[0] < 370:
+                if gaze[1] < 80:
+                    text = "UP CENTRE"
+                elif gaze[1] > 160:
+                    text = "DOWN CENTRE"
+                else:
+                    text = "STRAIGHT CENTRE"
+            elif gaze[0] < 300:
+                if gaze[1] < 80:
+                    text = "UP RIGHT"
+                elif gaze[1] > 160:
+                    text = "DOWN RIGHT"
+                else:
+                    text = "CENTRE RIGHT"
+            elif gaze[0] > 370:
+                if gaze[1] > 80:
+                    text = "UP LEFT"
+                elif gaze[1] > 160:
+                    text = "DOWN LEFT"
+                else:
+                    text = "CENTRE LEFT"
+
+        except:
+            pass
+
         p1_left = (int(left_pupil[0]), int(left_pupil[1]))
         p1_right = (int(right_pupil[0]), int(right_pupil[1]))
 
         p2 = (int(gaze[0]), int(gaze[1]))
 
-        try:
-            if gaze[0] > 800:
-                if gaze[1] < 300:
-                    text = "UP LEFT, "
-                elif gaze[1] > 300:
-                    text = "DOWN LEFT, "
-            elif gaze[0] < 570:
-                if gaze[1] < 200:
-                    text = "UP RIGHT, "
-                elif gaze[1] > 250:
-                    text = "DOWN RIGHT, "
-            else:
-                if gaze[1] < 200:
-                    text = "UP CENTRE, "
-                elif gaze[1] > 275 and gaze[0] < 665:
-                    text = "CENTRE, "
-                else:
-                    text = "DOWN CENTRE, "
-
-        except:
-            pass
-
         if len(text) != 0:
-            return text
+            return p1_left, p1_right, p2, text
         else:
-            return ""
-
-
+            return p1_left, p1_right, p2, ""
