@@ -162,7 +162,7 @@ def get_face_expression(image):
                 return text
 
             if len(text) == 0:
-                text = "NEUTRAL"
+                text = ""
                 return text
 
 if __name__ == "__main__":
