@@ -1,8 +1,8 @@
-import cv2
-import mediapipe as mp
 from scipy.spatial import distance as dist
+import mediapipe as mp
 import math as m
 import argparse
+import cv2
 
 
 mp_pose = mp.solutions.pose

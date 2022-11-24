@@ -1,8 +1,8 @@
-from torch import nn
 from torch.nn import functional as F
-import torch
-import torch.nn.init as init
 from torchvision import models
+import torch.nn.init as init
+from torch import nn
+import torch
 
 
 class DAN(nn.Module):
@@ -31,7 +31,7 @@ class DAN(nn.Module):
             heads.append(getattr(self,"cat_head%d" %i)(x))
         
         heads = torch.stack(heads).permute([1,0,2])
-        if heads.size(1)>1:
+        if heads.size(1) > 1:
             heads = F.log_softmax(heads,dim=1)
             
         out = self.fc(heads.sum(dim=1))

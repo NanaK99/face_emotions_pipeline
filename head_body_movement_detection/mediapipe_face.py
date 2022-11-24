@@ -1,7 +1,14 @@
-import cv2
-import mediapipe as mp
 from scipy.spatial import distance as dist
+from configparser import ConfigParser
+import mediapipe as mp
 import argparse
+import cv2
+
+
+config_object = ConfigParser()
+config_object.read("config.ini")
+
+FACE = config_object["HEAD_MOCEMENT"]
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -14,15 +21,6 @@ face_mesh = mp_face_mesh.FaceMesh(
         min_tracking_confidence=0.5)
 
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-
-FACE_TILT = .5
-
-EYE_OPEN_HEIGHT = .35
-
-BROWS_RAISE = .16
-BROW_RAISE_LEFT = .0028
-BROW_RAISE_RIGHT = .025
-FURROWED_BROWS = 0.05
 
 
 def get_aspect_ratio(top, bottom, right, left):

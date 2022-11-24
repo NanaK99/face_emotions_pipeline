@@ -3,6 +3,17 @@ import numpy as np
 from gaze_detection.helpers import relative, relativeT
 from math import atan
 
+from configparser import ConfigParser
+
+config_object = ConfigParser()
+config_object.read("config.ini")
+
+gaze = config_object["EYE_GAZE"]
+centre_upper_limit = gaze["CENTRE_UPPER_LIMIT"]
+centre_lower_limit = gaze["CENTRE_LOWER_LIMIT"]
+up = gaze["UP"]
+down = gaze["DOWN"]
+
 
 def findAngle(M1, M2):
     PI = 3.14159265
@@ -142,24 +153,24 @@ def gaze(frame, points):
 
         ### FOR Trott_Garner_Miranda_LG_2022_-_Audio2_new video
         try:
-            if gaze[0] > 300 and gaze[0] < 370:
-                if gaze[1] < 80:
+            if gaze[0] > centre_lower_limit and gaze[0] < centre_upper_limit:
+                if gaze[1] < up:
                     text = "UP CENTRE"
-                elif gaze[1] > 160:
+                elif gaze[1] > down:
                     text = "DOWN CENTRE"
                 else:
                     text = "STRAIGHT CENTRE"
-            elif gaze[0] < 300:
-                if gaze[1] < 80:
+            elif gaze[0] < centre_lower_limit:
+                if gaze[1] < up:
                     text = "UP RIGHT"
-                elif gaze[1] > 160:
+                elif gaze[1] > down:
                     text = "DOWN RIGHT"
                 else:
                     text = "CENTRE RIGHT"
-            elif gaze[0] > 370:
-                if gaze[1] > 80:
+            elif gaze[0] > centre_upper_limit:
+                if gaze[1] > up:
                     text = "UP LEFT"
-                elif gaze[1] > 160:
+                elif gaze[1] > down:
                     text = "DOWN LEFT"
                 else:
                     text = "CENTRE LEFT"

@@ -1,10 +1,18 @@
-import argparse
+from emotion_detection.dan import DAN
+from configparser import ConfigParser
+from torchvision import transforms
 from PIL import Image
 import numpy as np
-import cv2
+import argparse
 import torch
-from torchvision import transforms
-from emotion_detection.dan import DAN
+import cv2
+
+
+config_object = ConfigParser()
+config_object.read("config.ini")
+
+checkpoints = config_object["CHECKPOINTS"]
+checkpoints_path = checkpoints["checkpoints_path"]
 
 
 def parse_args():
@@ -24,7 +32,7 @@ class Model():
                                 ])
         self.labels = ['NEUTRAL', 'HAPPY', 'SAD', 'SURPRISE', 'FEAR', 'DISGUST', 'ANGER', 'CONTEMPT']
         self.model = DAN(num_head=4, num_class=8, pretrained=False)
-        checkpoint = torch.load('./checkpoints/affecnet8_epoch5_acc0.6209.pth',
+        checkpoint = torch.load(checkpoints_path,
             map_location=self.device)
         self.model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         self.model.to(self.device)
@@ -47,9 +55,9 @@ class Model():
         # print(img0)
         # print(x,y,w,h)
         #img = img0[y:y+h, x:x+w]
-        img = img0.crop((x,y, x+w, y+h))
+        img = img0.crop((x, y, x+w, y+h))
         img = self.data_transforms(img)
-        img = img.view(1,3,224,224)
+        img = img.view(1, 3, 224, 224)
         img = img.to(self.device)
         with torch.set_grad_enabled(False):
             out, _, _ = self.model(img)

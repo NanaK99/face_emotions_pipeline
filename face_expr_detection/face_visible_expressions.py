@@ -1,6 +1,8 @@
-import cv2
+from configparser import ConfigParser
 import mediapipe as mp
 import argparse
+import cv2
+
 
 from scipy.spatial import distance as dist
 
@@ -16,14 +18,16 @@ face_mesh = mp_face_mesh.FaceMesh(
 
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
-FACE_TILT = .5
+config_object = ConfigParser()
+config_object.read("config.ini")
 
-EYE_OPEN_HEIGHT = .35
-
-BROWS_RAISE = .16
-BROW_RAISE_LEFT = .0028
-BROW_RAISE_RIGHT = .025
-FURROWED_BROWS = 0.03
+expressions = config_object["EXPRESSIONS"]
+FACE_TILT = expressions["FACE_TILT"]
+EYE_OPEN_HEIGHT = expressions["EYE_OPEN_HEIGHT"]
+BROWS_RAISE = expressions["BROWS_RAISE"]
+BROW_RAISE_LEFT = expressions["BROW_RAISE_LEFT"]
+BROW_RAISE_RIGHT = expressions["BROW_RAISE_RIGHT"]
+FURROWED_BROWS = expressions["FURROWED_BROWS"]
 
 
 def get_aspect_ratio(top, bottom, right, left):
@@ -164,6 +168,7 @@ def get_face_expression(image):
             if len(text) == 0:
                 text = ""
                 return text
+
 
 if __name__ == "__main__":
 

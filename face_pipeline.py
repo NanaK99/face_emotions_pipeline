@@ -3,6 +3,7 @@ from face_expr_detection import face_visible_expressions
 from gaze_detection import gaze_estimator
 from emotion_detection import inference
 
+from configparser import ConfigParser
 from collections import Counter
 from praatio import tgio
 import numpy as np
@@ -32,6 +33,15 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 model = inference.Model()
+
+config_object = ConfigParser()
+config_object.read("config.ini")
+BODY = config_object["BODY_MOVEMENT"]
+
+one_shoulder_movement = BODY["SHOULDER_ANGLE_STD"]
+both_shoulder_movement = BODY["BOTH_SHOULDERS_Y_STD"]
+lean_in_out_thresh = BODY["BOTH_SHOULDERS_Z_DIFF"]
+num_of_diff_head_positions = BODY["NUM_OF_DIFF_HEAD_POSITIONS"]
 
 gaze_texts = []
 headmove_texts = []
@@ -160,11 +170,11 @@ while cap.isOpened():
                         both_shoulder_up_down = np.std(both_up_down)
 
                         if len(one_up_down) > 0 and len(both_up_down) and len(lean_in_out) > 0:
-                            if one_shoulder_up_down > 7 or both_shoulder_up_down > 0.2:
+                            if one_shoulder_up_down > one_shoulder_movement or both_shoulder_up_down > both_shoulder_movement:
                                 most_common_body_move = "SHOULDER MOVEMENT"
-                            elif (abs(np.min(lean_in_out)) - abs(np.mean(lean_in_out))) < -0.5:
+                            elif (abs(np.min(lean_in_out)) - abs(np.mean(lean_in_out))) < -1 * lean_in_out_thresh:
                                 most_common_body_move = "LEAN IN"
-                            elif (abs(np.max(lean_in_out)) - abs(np.mean(lean_in_out))) > 0.5:
+                            elif (abs(np.max(lean_in_out)) - abs(np.mean(lean_in_out))) > lean_in_out_thresh:
                                 most_common_body_move = "LEAN OUT"
                             else:
                                 most_common_body_move = ""
@@ -179,9 +189,9 @@ while cap.isOpened():
                         else:
                             mediapipe_counter_most_common = 0
 
-                        if head_shake_dir_len // 3 > mediapipe_counter_most_common and head_shake_dir_len // 3 > head_nod_dir_len // 3:
+                        if head_shake_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_shake_dir_len // num_of_diff_head_positions > head_nod_dir_len // num_of_diff_head_positions:
                             most_common_head_move = "HEAD SHAKE"
-                        elif head_nod_dir_len // 3 > mediapipe_counter_most_common and head_nod_dir_len // 3 > head_shake_dir_len // 3:
+                        elif head_nod_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_nod_dir_len // num_of_diff_head_positions > head_shake_dir_len // num_of_diff_head_positions:
                             most_common_head_move = "HEAD NOD"
                         else:
                             most_common_head_move = ""
