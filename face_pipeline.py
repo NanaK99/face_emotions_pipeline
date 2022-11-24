@@ -1,20 +1,36 @@
+from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
 from face_expr_detection import face_visible_expressions
 from gaze_detection import gaze_estimator
-from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
 from emotion_detection import inference
 
-import cv2
 from collections import Counter
 from praatio import tgio
 import numpy as np
+import argparse
+import cv2
 import os
 
+parser = argparse.ArgumentParser(description='Process some integers.')
 
-video_path = "vid.mp4"
+parser.add_argument('--video', type=str,
+                    help='path to the input video')
+parser.add_argument('--input_textgrid', type=str,
+                    help='path to the base textgrid')
+parser.add_argument('--output_dir_name', type=str,
+                    help='name of the directory where the generated textgrid files should be saved')
+
+args = parser.parse_args()
+
+video_path = args.video
+input_textgrid_path = args.input_textgrid
+output_dir_name = args.output_dir_name
+
 cap = cv2.VideoCapture(video_path)
-tg = tgio.openTextgrid("./static/trott.TextGrid")
+tg = tgio.openTextgrid(input_textgrid_path)
+
 fps = cap.get(cv2.CAP_PROP_FPS)
 font = cv2.FONT_HERSHEY_SIMPLEX
+
 model = inference.Model()
 
 gaze_texts = []
@@ -233,7 +249,7 @@ while cap.isOpened():
         tg_body.addTier(body_tier)
         tg_emotion.addTier(emotion_tier)
 
-        directory_path = "./output_textgrids/"
+        directory_path = os.path.join("./", output_dir_name)
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
 
