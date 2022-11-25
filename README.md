@@ -18,7 +18,7 @@ mkdir checkpoints
 ```
 pip3 install -r requirements.txt
 ```
-5. Run: 
+6. Run: 
 ```
 python face_pipeline.py --video.mp4 --input_textgrid input.TextGrid --output_dir_name outputs
 ```
