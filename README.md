@@ -6,23 +6,25 @@ git clone https://github.com/MagicalLabs/face_emotions_pipeline.git
 ```
 mkdir checkpoints
 ```
-3. Download one of the pre-trained model weights to the *checkpoints* directory. Currently, weights named *AffectNet-8* are used, you can use any one from the available three optoins.
+3. Download the below pre-trained model weights to the *checkpoints* directory.
 
 |     task    	| epochs 	| accuracy 	| link 	|
 |:-----------:	|:------:	|:--------:	|:----:	|
 | AffectNet-8 	|    5   	| 62.09    	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)      	|
-| AffectNet-7 	|    6    	| 65.69     |[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)  
-|    RAF-DB   	|   21   	| 89.70    	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)
 
+4. In the directory *static*, modify the file *config.ini* as you wish.
 
-4. In the face_emotions_pipeline directory, run: 
+5. In the face_emotions_pipeline directory, run: 
 ```
 pip3 install -r requirements.txt
 ```
 5. Run: 
 ```
-python face_pipeline.py 
+python face_pipeline.py --video.mp4 --input_textgrid input.TextGrid --output_dir_name outputs
 ```
+, where the first argument is the path to the video file, 
+the second argument is the path to the input textgrid (which will be used to generate the output textgrids), and 
+the third argument is a name of an output folder, where you wish to save the generated textgrids.
 
 The latter command will read frames from the video path and output four different TextGrid files: 
 - a file corresponding to the detected eye gaze movement, such as: "up left", "down right", "centre", etc,

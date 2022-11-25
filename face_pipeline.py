@@ -35,13 +35,13 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 model = inference.Model()
 
 config_object = ConfigParser()
-config_object.read("config.ini")
+config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
 
-one_shoulder_movement = BODY["SHOULDER_ANGLE_STD"]
-both_shoulder_movement = BODY["BOTH_SHOULDERS_Y_STD"]
-lean_in_out_thresh = BODY["BOTH_SHOULDERS_Z_DIFF"]
-num_of_diff_head_positions = BODY["NUM_OF_DIFF_HEAD_POSITIONS"]
+one_shoulder_movement = int(BODY["SHOULDER_ANGLE_STD"])
+both_shoulder_movement = float(BODY["BOTH_SHOULDERS_Y_STD"])
+lean_in_out_thresh = float(BODY["BOTH_SHOULDERS_Z_DIFF"])
+num_of_diff_head_positions = int(BODY["NUM_OF_DIFF_HEAD_POSITIONS"])
 
 gaze_texts = []
 headmove_texts = []

@@ -19,15 +19,15 @@ face_mesh = mp_face_mesh.FaceMesh(
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
 config_object = ConfigParser()
-config_object.read("config.ini")
+config_object.read("./static/config.ini")
 
-expressions = config_object["EXPRESSIONS"]
-FACE_TILT = expressions["FACE_TILT"]
-EYE_OPEN_HEIGHT = expressions["EYE_OPEN_HEIGHT"]
-BROWS_RAISE = expressions["BROWS_RAISE"]
-BROW_RAISE_LEFT = expressions["BROW_RAISE_LEFT"]
-BROW_RAISE_RIGHT = expressions["BROW_RAISE_RIGHT"]
-FURROWED_BROWS = expressions["FURROWED_BROWS"]
+expressions_section = config_object["EXPRESSIONS"]
+FACE_TILT = float(expressions_section["FACE_TILT"])
+EYE_OPEN_HEIGHT = float(expressions_section["EYE_OPEN_HEIGHT"])
+BROWS_RAISE = float(expressions_section["BROWS_RAISE"])
+BROW_RAISE_LEFT = float(expressions_section["BROW_RAISE_LEFT"])
+BROW_RAISE_RIGHT = float(expressions_section["BROW_RAISE_RIGHT"])
+FURROWED_BROWS = float(expressions_section["FURROWED_BROWS"])
 
 
 def get_aspect_ratio(top, bottom, right, left):
@@ -55,8 +55,6 @@ def get_face_expression(image):
             face_mid_bottom = face[152]
             cheek_mid_right = face[50]
             cheek_mid_left = face[280]
-
-            # print(cheek_mid_left, cheek_mid_right)
 
             if cheek_mid_right.x < face_mid_right.x:
                 text = "HEAD TURN RIGHT"
@@ -104,7 +102,6 @@ def get_face_expression(image):
                 text = "NARROWED EYES"
                 return text
 
-            # print(brow_eyeL_inner_dist, brow_eyeR_inner_dist, eyeA_ar)
             if brow_eyeL_inner_dist < FURROWED_BROWS and brow_eyeR_inner_dist < FURROWED_BROWS:
                 if eyeA_ar > 0.15:
                     text = "FURROWED BROWS"

@@ -9,10 +9,10 @@ import cv2
 
 
 config_object = ConfigParser()
-config_object.read("config.ini")
+config_object.read("./static/config.ini")
 
 checkpoints = config_object["CHECKPOINTS"]
-checkpoints_path = checkpoints["checkpoints_path"]
+checkpoints_path = checkpoints["CHECKPOINTS_PATH"]
 
 
 def parse_args():

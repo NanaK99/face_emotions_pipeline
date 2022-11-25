@@ -6,13 +6,13 @@ from math import atan
 from configparser import ConfigParser
 
 config_object = ConfigParser()
-config_object.read("config.ini")
+config_object.read("./static/config.ini")
 
 gaze = config_object["EYE_GAZE"]
-centre_upper_limit = gaze["CENTRE_UPPER_LIMIT"]
-centre_lower_limit = gaze["CENTRE_LOWER_LIMIT"]
-up = gaze["UP"]
-down = gaze["DOWN"]
+centre_upper_limit = int(gaze["CENTRE_UPPER_LIMIT"])
+centre_lower_limit = int(gaze["CENTRE_LOWER_LIMIT"])
+up = int(gaze["UP"])
+down = int(gaze["DOWN"])
 
 
 def findAngle(M1, M2):
