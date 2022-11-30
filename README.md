@@ -8,9 +8,9 @@ mkdir checkpoints
 ```
 3. Download the below pre-trained model weights to the *checkpoints* directory.
 
-|     task    	| epochs 	| accuracy 	| link 	|
-|:-----------:	|:------:	|:--------:	|:----:	|
-| AffectNet-8 	|    5   	| 62.09    	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)      	|
+|     task     	| link 	|
+|:-----------:	|:------:	|
+| AffectNet-8 	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)      	|
 
 4. In the directory *static*, modify the file *config.ini* as you wish.
 
