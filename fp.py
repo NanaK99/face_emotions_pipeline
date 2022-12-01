@@ -283,9 +283,6 @@ while cap.isOpened():
             print(f"File {textgrid_paths[2]} successfully saved!")
             print(f"File {textgrid_paths[3]} successfully saved!")
 
-            cap.release()
-            cv2.destroyAllWindows()
-
         except:
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                       output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion)
@@ -293,3 +290,6 @@ while cap.isOpened():
             sys.exit()
             cap.release()
             cv2.destroyAllWindows()
+
+        cap.release()
+        cv2.destroyAllWindows()
