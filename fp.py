@@ -62,6 +62,12 @@ model = inference.Model()
 config_object = ConfigParser()
 config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
+IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
+
+ignore_exprs = []
+for expr in IGNORE_EXPRS:
+    ignore_exprs.append(IGNORE_EXPRS[expr])
+
 
 one_shoulder_movement = int(BODY["SHOULDER_ANGLE_STD"])
 both_shoulder_movement = float(BODY["BOTH_SHOULDERS_Y_STD"])
@@ -112,7 +118,7 @@ while cap.isOpened():
                 total_sec = end - start
                 num_frames = total_sec * 25
                 cap.set(cv2.CAP_PROP_POS_FRAMES, round(start * fps))
-                if label != "0":
+                if label != "0" or label in ignore_exprs:
                     if int(num_frames) > 0:
                         frame_idx = cap.get(cv2.CAP_PROP_POS_FRAMES)
                         while frame_idx < end*fps:
