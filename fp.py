@@ -65,7 +65,7 @@ BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
-min_num_of_frames = video_parameters["MIN_NUM_OF_FRAMES"]
+min_num_of_frames = int(video_parameters["MIN_NUM_OF_FRAMES"])
 
 ignore_exprs = []
 for expr in IGNORE_EXPRS:
@@ -281,6 +281,7 @@ while cap.isOpened():
                             emotion_entrylist.append((start, end, emotion_label))
 
                     else:
+                        label = ""
                         gaze_entrylist.append((start, end, label))
                         expr_entrylist.append((start, end, label))
                         body_entrylist.append((start, end, label))
