@@ -90,9 +90,6 @@ head_shake_dir = []
 head_nod_dir = []
 head_shake_idxs = []
 head_nod_idxs = []
-# change_name = True
-
-new_tier_name_list = []
 
 tier_name_list = tg.tierNameList
 
