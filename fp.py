@@ -87,6 +87,9 @@ head_shake_dir = []
 head_nod_dir = []
 head_shake_idxs = []
 head_nod_idxs = []
+# change_name = True
+
+new_tier_name_list = []
 
 tier_name_list = tg.tierNameList
 
@@ -282,7 +285,7 @@ while cap.isOpened():
 
             print(f"Done with {tier_name}")
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion)
+                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
             print(f"File {textgrid_paths[0]} successfully saved!")
             print(f"File {textgrid_paths[1]} successfully saved!")
@@ -291,7 +294,7 @@ while cap.isOpened():
 
         except KeyboardInterrupt:
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion)
+                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
             sys.exit()
             cap.release()
