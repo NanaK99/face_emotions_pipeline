@@ -64,6 +64,9 @@ config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 
+video_parameters = config_object["VIDEO_PARAMETERS"]
+min_num_of_frames = video_parameters["MIN_NUM_OF_FRAMES"]
+
 ignore_exprs = []
 for expr in IGNORE_EXPRS:
     ignore_exprs.append(IGNORE_EXPRS[expr])
@@ -122,7 +125,7 @@ while cap.isOpened():
                 num_frames = total_sec * 25
                 cap.set(cv2.CAP_PROP_POS_FRAMES, round(start * fps))
                 if label != "0" or label in ignore_exprs:
-                    if int(num_frames) > 0:
+                    if int(num_frames) > min_num_of_frames:
                         frame_idx = cap.get(cv2.CAP_PROP_POS_FRAMES)
                         while frame_idx < end*fps:
                             # To improve performance, optionally mark the image as not writeable to pass by reference.
