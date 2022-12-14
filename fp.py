@@ -62,6 +62,15 @@ model = inference.Model()
 config_object = ConfigParser()
 config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
+IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
+
+video_parameters = config_object["VIDEO_PARAMETERS"]
+min_num_of_frames = int(video_parameters["MIN_NUM_OF_FRAMES"])
+
+ignore_exprs = []
+for expr in IGNORE_EXPRS:
+    ignore_exprs.append(IGNORE_EXPRS[expr])
+
 
 one_shoulder_movement = int(BODY["SHOULDER_ANGLE_STD"])
 both_shoulder_movement = float(BODY["BOTH_SHOULDERS_Y_STD"])
@@ -81,6 +90,9 @@ head_shake_dir = []
 head_nod_dir = []
 head_shake_idxs = []
 head_nod_idxs = []
+# change_name = True
+
+new_tier_name_list = []
 
 tier_name_list = tg.tierNameList
 
@@ -112,8 +124,8 @@ while cap.isOpened():
                 total_sec = end - start
                 num_frames = total_sec * 25
                 cap.set(cv2.CAP_PROP_POS_FRAMES, round(start * fps))
-                if label != "0":
-                    if int(num_frames) > 0:
+                if label != "0" or label in ignore_exprs:
+                    if int(num_frames) > min_num_of_frames:
                         frame_idx = cap.get(cv2.CAP_PROP_POS_FRAMES)
                         while frame_idx < end*fps:
                             # To improve performance, optionally mark the image as not writeable to pass by reference.
@@ -269,6 +281,7 @@ while cap.isOpened():
                             emotion_entrylist.append((start, end, emotion_label))
 
                     else:
+                        label = ""
                         gaze_entrylist.append((start, end, label))
                         expr_entrylist.append((start, end, label))
                         body_entrylist.append((start, end, label))
@@ -276,7 +289,7 @@ while cap.isOpened():
 
             print(f"Done with {tier_name}")
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion)
+                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
             print(f"File {textgrid_paths[0]} successfully saved!")
             print(f"File {textgrid_paths[1]} successfully saved!")
@@ -285,7 +298,7 @@ while cap.isOpened():
 
         except KeyboardInterrupt:
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion)
+                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
             sys.exit()
             cap.release()
