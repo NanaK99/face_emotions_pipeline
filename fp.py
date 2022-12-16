@@ -4,6 +4,7 @@ from gaze_detection import gaze_estimator
 from emotion_detection import inference
 from utils import textgrid_generation
 
+from multiprocessing import Pool
 from configparser import ConfigParser
 from collections import Counter
 from praatio import tgio
@@ -91,11 +92,11 @@ head_nod_dir = []
 head_shake_idxs = []
 head_nod_idxs = []
 
+new_tier_name_list = []
+
 tier_name_list = tg.tierNameList
 
-
 while cap.isOpened():
-    # tier_name_list = ["Nicole-Dressel - words"]  # for quick experiments
     tg_gaze = tgio.Textgrid()
     tg_expr = tgio.Textgrid()
     tg_body = tgio.Textgrid()
@@ -288,11 +289,6 @@ while cap.isOpened():
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                                output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
-            print(f"File {textgrid_paths[0]} successfully saved!")
-            print(f"File {textgrid_paths[1]} successfully saved!")
-            print(f"File {textgrid_paths[2]} successfully saved!")
-            print(f"File {textgrid_paths[3]} successfully saved!")
-
         except KeyboardInterrupt:
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                       output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
@@ -300,6 +296,11 @@ while cap.isOpened():
             sys.exit()
             cap.release()
             cv2.destroyAllWindows()
+
+    print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     cap.release()
     cv2.destroyAllWindows()
