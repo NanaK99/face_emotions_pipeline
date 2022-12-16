@@ -1,0 +1,192 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0
+xmax = 8366.4
+tiers? <exists>
+size = 4
+item []:
+    item [1]:
+        class = "IntervalTier"
+        name = "Ajay-Waghray - words"
+        xmin = 0
+        xmax = 103.67
+        intervals: size = 10
+        intervals [1]:
+            xmin = 0
+            xmax = 73.44
+            text = ""
+        intervals [2]:
+            xmin = 73.44
+            xmax = 73.63
+            text = "he's"
+        intervals [3]:
+            xmin = 73.63
+            xmax = 73.82
+            text = "got"
+        intervals [4]:
+            xmin = 73.82
+            xmax = 73.85
+            text = ""
+        intervals [5]:
+            xmin = 73.85
+            xmax = 74.17
+            text = "his"
+        intervals [6]:
+            xmin = 74.17
+            xmax = 102.99
+            text = ""
+        intervals [7]:
+            xmin = 102.99
+            xmax = 103.12
+            text = "this"
+        intervals [8]:
+            xmin = 103.12
+            xmax = 103.34
+            text = "is"
+        intervals [9]:
+            xmin = 103.34
+            xmax = 103.51
+            text = "this"
+        intervals [10]:
+            xmin = 103.51
+            xmax = 103.67
+            text = "is"
+    item [2]:
+        class = "IntervalTier"
+        name = "Carl-Schwind---Gap-International - words"
+        xmin = 0
+        xmax = 4.059
+        intervals: size = 10
+        intervals [1]:
+            xmin = 0
+            xmax = 1.129
+            text = ""
+        intervals [2]:
+            xmin = 1.129
+            xmax = 1.329
+            text = "okay"
+        intervals [3]:
+            xmin = 1.329
+            xmax = 1.579
+            text = "great"
+        intervals [4]:
+            xmin = 1.579
+            xmax = 1.939
+            text = ""
+        intervals [5]:
+            xmin = 1.939
+            xmax = 2.299
+            text = "um"
+        intervals [6]:
+            xmin = 2.299
+            xmax = 2.919
+            text = ""
+        intervals [7]:
+            xmin = 2.919
+            xmax = 3.309
+            text = "so"
+        intervals [8]:
+            xmin = 3.309
+            xmax = 3.339
+            text = ""
+        intervals [9]:
+            xmin = 3.339
+            xmax = 4.029
+            text = "paula"
+        intervals [10]:
+            xmin = 4.029
+            xmax = 4.059
+            text = ""
+    item [3]:
+        class = "IntervalTier"
+        name = "Jodie-Ann-Pennant - words"
+        xmin = 0
+        xmax = 49.65
+        intervals: size = 10
+        intervals [1]:
+            xmin = 0
+            xmax = 47.52
+            text = ""
+        intervals [2]:
+            xmin = 47.52
+            xmax = 48.13
+            text = "i"
+        intervals [3]:
+            xmin = 48.13
+            xmax = 48.16
+            text = ""
+        intervals [4]:
+            xmin = 48.16
+            xmax = 48.47
+            text = "don't"
+        intervals [5]:
+            xmin = 48.47
+            xmax = 48.69
+            text = "know"
+        intervals [6]:
+            xmin = 48.69
+            xmax = 48.83
+            text = "that"
+        intervals [7]:
+            xmin = 48.83
+            xmax = 48.96
+            text = "we"
+        intervals [8]:
+            xmin = 48.96
+            xmax = 49.32
+            text = "do"
+        intervals [9]:
+            xmin = 49.32
+            xmax = 49.48
+            text = "so"
+        intervals [10]:
+            xmin = 49.48
+            xmax = 49.65
+            text = "let"
+    item [4]:
+        class = "IntervalTier"
+        name = "Paula-Gerfen - words"
+        xmin = 0
+        xmax = 36.09
+        intervals: size = 10
+        intervals [1]:
+            xmin = 0
+            xmax = 34.02
+            text = ""
+        intervals [2]:
+            xmin = 34.02
+            xmax = 34.35
+            text = "okay"
+        intervals [3]:
+            xmin = 34.35
+            xmax = 34.82
+            text = "so"
+        intervals [4]:
+            xmin = 34.82
+            xmax = 34.85
+            text = ""
+        intervals [5]:
+            xmin = 34.85
+            xmax = 35.39
+            text = "so"
+        intervals [6]:
+            xmin = 35.39
+            xmax = 35.42
+            text = ""
+        intervals [7]:
+            xmin = 35.42
+            xmax = 35.51
+            text = "for"
+        intervals [8]:
+            xmin = 35.51
+            xmax = 35.72
+            text = "some"
+        intervals [9]:
+            xmin = 35.72
+            xmax = 35.99
+            text = "reason"
+        intervals [10]:
+            xmin = 35.99
+            xmax = 36.09
+            text = "i"
