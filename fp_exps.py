@@ -4,8 +4,7 @@ from gaze_detection import gaze_estimator
 from emotion_detection import inference
 from utils import textgrid_generation
 
-from multiprocessing import Pool, cpu_count
-from imutils.video import FileVideoStream
+from multiprocessing import Pool
 from configparser import ConfigParser
 from collections import Counter
 from praatio import tgio
@@ -97,11 +96,7 @@ new_tier_name_list = []
 
 tier_name_list = tg.tierNameList
 
-fvs = FileVideoStream("test.mp4").start()
-
-# while fvs.more():
 while cap.isOpened():
-    # tier_name_list = ["Nicole-Dressel - words"]  # for quick experiments
     tg_gaze = tgio.Textgrid()
     tg_expr = tgio.Textgrid()
     tg_body = tgio.Textgrid()
@@ -118,7 +113,6 @@ while cap.isOpened():
 
         try:
             for idx, entry in enumerate(entryList):
-                img = fvs.read()
                 success, img = cap.read()
                 if not success: break
                 print(f"Working on interval {idx}.....")
@@ -137,10 +131,7 @@ while cap.isOpened():
                             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
 
                             # GAZE
-                            gaze_process = Process(target=gaze_estimator.get_gaze_direction, args=(img,))
-                            gaze_process.start()
-                            # gaze_all = gaze_estimator.get_gaze_direction(img)
-
+                            gaze_all = gaze_estimator.get_gaze_direction(img)
                             if gaze_all is not None:
                                 g_text = gaze_all[3]
                             else:
@@ -148,65 +139,55 @@ while cap.isOpened():
                             gaze_texts.append(g_text)
 
                             # HEAD MOVEMENT
-                            face_move_process = Process(target=mediapipe_face.get_face_movement, args=(img,))
-                            face_move_process_process.start()
-                            # face_move = mediapipe_face.get_face_movement(img)
+                            face_mov = mediapipe_face.get_face_movement(img)
 
-                            if face_move is not None:
+                            if face_mov is not None:
 
-                                if face_move in ["up", "down", "right", "left"]:
-                                    if face_move == "left" or face_move == "right":
+                                if face_mov in ["up", "down", "right", "left"]:
+                                    if face_mov == "left" or face_mov == "right":
                                         if len(head_shake_idxs) > 0:
                                             if head_shake_idxs[-1] < frame_idx:
-                                                if head_shake_dir[-1] != face_move:
+                                                if head_shake_dir[-1] != face_mov:
                                                     head_shake_idxs.append(frame_idx)
-                                                    head_shake_dir.append(face_move)
+                                                    head_shake_dir.append(face_mov)
                                             else:
                                                 head_shake_idxs.append(frame_idx)
                                         else:
                                             head_shake_idxs.append(frame_idx)
-                                            head_shake_dir.append(face_move)
+                                            head_shake_dir.append(face_mov)
 
-                                    elif face_move == "up" or face_move == "down":
+                                    elif face_mov == "up" or face_mov == "down":
                                         if len(head_nod_idxs) > 0:
                                             if head_nod_idxs[-1] < frame_idx:
-                                                if head_nod_dir[-1] != face_move:
+                                                if head_nod_dir[-1] != face_mov:
                                                     head_nod_idxs.append(frame_idx)
-                                                    head_nod_dir.append(face_move)
+                                                    head_nod_dir.append(face_mov)
                                             else:
                                                 head_nod_idxs.append(frame_idx)
                                         else:
                                             head_nod_idxs.append(frame_idx)
-                                            head_nod_dir.append(face_move)
+                                            head_nod_dir.append(face_mov)
 
                                 else:
-                                    headmove_texts.append(face_move)
+                                    headmove_texts.append(face_mov)
                             else:
                                 headmove_texts.append("")
 
                             # SHOULDER MOVEMENT
-                            body_move_process = Process(target=mediapipe_shoulders.get_body_movement, args=(img,))
-                            body_move_process.start()
-                            # body_move = mediapipe_shoulders.get_body_movement(img)
-
+                            body_move = mediapipe_shoulders.get_body_movement(img)
                             if body_move is not None:
                                 one_up_down.append(body_move[0])
                                 both_up_down.append(body_move[1])
                                 lean_in_out.append(body_move[2])
 
                             # FACE EXPRESSION
-                            face_expr_process = Process(target=face_visible_expressions.get_face_expression, args=(img,))
-                            face_expr_process.start()
-                            # face_expr = face_visible_expressions.get_face_expression(img)
+                            face_expr = face_visible_expressions.get_face_expression(img)
 
                             if face_expr is not None:
                                 faceexpr_texts.append(face_expr)
 
                             # EMOTION
-                            emotion_process = Process(target=model.fer, args=(img,))
-                            emotion_process.start()
-                            # emotion_label = model.fer(img)
-
+                            emotion_label = model.fer(img)
                             emotion_texts.append(emotion_label)
 
                             frame_idx += 1
@@ -308,11 +289,6 @@ while cap.isOpened():
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                                output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
-            print(f"File {textgrid_paths[0]} successfully saved!")
-            print(f"File {textgrid_paths[1]} successfully saved!")
-            print(f"File {textgrid_paths[2]} successfully saved!")
-            print(f"File {textgrid_paths[3]} successfully saved!")
-
         except KeyboardInterrupt:
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                       output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
@@ -320,6 +296,11 @@ while cap.isOpened():
             sys.exit()
             cap.release()
             cv2.destroyAllWindows()
+
+    print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
+    print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     cap.release()
     cv2.destroyAllWindows()
