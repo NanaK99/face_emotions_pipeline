@@ -1,7 +1,8 @@
+import operator
+
 from praatio import tgio
 from configparser import ConfigParser
 import os
-import itertools
 
 config_object = ConfigParser()
 config_object.read("./static/config.ini")
@@ -66,24 +67,59 @@ def merge_speakerss(combined_speakers_json):
     speaker4 = [interval for interval in speaker_4 if interval[2] != "0"]
     speaker5 = [interval for interval in speaker_5 if interval[2] != "0"]
 
+    all_speakers = speaker1 + speaker2 + speaker3 + speaker4 + speaker5
     print(len(speaker1), len(speaker2), len(speaker3), len(speaker4), len(speaker5))
-    print(speaker1[:5])
-    print(speaker2[:5])
-    print(speaker3[:5])
-    print(speaker4[:5])
-    print(speaker5[:5])
-    all_speakers=[]
-    all_speakers.extend(speaker1)
-    all_speakers.extend(["2"])
-    all_speakers.extend(speaker2)
-    all_speakers.extend(["3"])
-    all_speakers.extend(speaker3)
-    all_speakers.extend(["4"])
-    all_speakers.extend(speaker4)
-    all_speakers.extend(["5"])
-    all_speakers.extend(speaker5)
+    # print(speaker1[:5])
+    # print(speaker2[:5])
+    # print(speaker3[:5])
+    # print(speaker4[:5])
+    # print(speaker5[:5])
+    # all_speakers=[]
+    # all_speakers.extend(speaker1)
+    # all_speakers.extend(["2"])
+    # all_speakers.extend(speaker2)
+    # all_speakers.extend(["3"])
+    # all_speakers.extend(speaker3)
+    # all_speakers.extend(["4"])
+    # all_speakers.extend(speaker4)
+    # all_speakers.extend(["5"])
+    # all_speakers.extend(speaker5)
     # print(all_speakers)
+    xmins1 = [interval[0] for interval in speaker1]
+    xmins2 = [interval[0] for interval in speaker2]
+    xmins3 = [interval[0] for interval in speaker3]
+    xmins4 = [interval[0] for interval in speaker4]
+    xmins5 = [interval[0] for interval in speaker5]
+    xmins = xmins1 + xmins2 + xmins3 + xmins4 + xmins5
 
+    xmaxs1 = [interval[1] for interval in speaker1]
+    xmaxs2 = [interval[1] for interval in speaker2]
+    xmaxs3 = [interval[1] for interval in speaker3]
+    xmaxs4 = [interval[1] for interval in speaker4]
+    xmaxs5 = [interval[1] for interval in speaker5]
+    xmaxs = xmaxs1 + xmaxs2 + xmaxs3 + xmaxs4 + xmaxs5
+
+    labels1 = [interval[2] for interval in speaker1]
+    labels2 = [interval[2] for interval in speaker2]
+    labels3 = [interval[2] for interval in speaker3]
+    labels4 = [interval[2] for interval in speaker4]
+    labels5 = [interval[2] for interval in speaker5]
+    labels = labels1 + labels2 + labels3 + labels4 + labels5
+
+    xmaxs_sorted = sorted(xmaxs)
+    xmins_sorted = sorted(xmins)
+
+    print(z)
+
+
+
+"""
+[[581.35, 581.68, 'sorry'], [581.68, 582.17, 'good'], [582.17, 582.43, 'and'], [582.43, 582.54, 'then'], [582.54, 582.68, 'when']]
+[[25.86, 26.14, 'okay'], [27.81, 28.38, 'um'], [28.83, 29.4, 'so'], [29.77, 30.06, 'i'], [30.06, 30.64, 'wanna']]
+[[0.299, 0.639, 'please'], [0.639, 0.889, 'stay'], [0.889, 1.149, 'on'], [1.149, 1.419, 'mute'], [1.419, 1.549, 'so']]
+[[5180.55, 5180.72, 'yeah'], [5180.75, 5180.98, 'hi'], [5188.44, 5188.52, 'yeah'], [5188.52, 5188.68, 'i'], [5188.68, 5188.85, 'did']]
+[[2062.41, 2062.71, "what's"], [2062.71, 2062.8, 'the'], [2062.8, 2063.17, 'hardest'], [2064.3, 2064.65, 'figured'], [2064.65, 2064.99, 'out']]
+"""
     # starts = combined_speakers_json[0]
     # ends = combined_speakers_json[1]
     # labels = combined_speakers_json[2]
