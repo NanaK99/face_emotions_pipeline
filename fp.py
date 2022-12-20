@@ -40,9 +40,24 @@ output_dir_name = args.output_dir_name
 VID_EXTENSIONS = ["mp4"]
 TEXTGRID_EXTENSIONS = ["TextGrid"]
 
+error_path = ""
+
+vid_exist = os.path.exists(video_path)
+textgrid_path_exist = os.path.exists(input_textgrid_path)
+
+if (not vid_exist):
+    error_path = video_path
+if (not textgrid_path_exist):
+    error_path = input_textgrid_path
+
+if len(error_path) != 0:
+    sys.stderr.write(f"{error_path} does not exist!")
+    sys.exit(2)
+
 if video_path.split(".")[-1] not in VID_EXTENSIONS:
     sys.stderr.write(f"{video_path} is not in the correct format!")
     sys.exit(2)
+
 
 if input_textgrid_path.split(".")[-1] not in TEXTGRID_EXTENSIONS:
     sys.stderr.write(f"{input_textgrid_path} is not in the correct format!")
