@@ -2,7 +2,7 @@ from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
 from face_expr_detection import face_visible_expressions
 from gaze_detection import gaze_estimator
 from emotion_detection import inference
-from utils import textgrid_generation
+from utils import textgrid_generation, merge_speakers, preprocess_tg
 
 from multiprocessing import Pool
 from configparser import ConfigParser
@@ -68,7 +68,6 @@ if not os.path.exists(directory_path):
     os.makedirs(directory_path)
 
 cap = cv2.VideoCapture(video_path)
-tg = tgio.openTextgrid(input_textgrid_path)
 
 fps = cap.get(cv2.CAP_PROP_FPS)
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -79,6 +78,15 @@ config_object = ConfigParser()
 config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
+
+paths = config_object["PATHS"]
+merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
+final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
+
+merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path)
+final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path)
+tg = tgio.openTextgrid(final_tg_path)
+
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
 min_num_of_frames = int(video_parameters["MIN_NUM_OF_FRAMES"])

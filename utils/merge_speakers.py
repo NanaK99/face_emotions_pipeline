@@ -1,6 +1,7 @@
 from praatio import tgio
 import os
 
+
 def get_speaker_entries(tg_file):
     tier_name_list = tg_file.tierNameList
 
@@ -81,7 +82,7 @@ def merge_speakerss(individual_entries):
     return new_entrylist
 
 
-def gen_new_tg(tg_list, output_dir_name, input_txtg_path):
+def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
     tg_combined = tgio.Textgrid()
     tg_original = tgio.openTextgrid(input_txtg_path)
@@ -93,28 +94,28 @@ def gen_new_tg(tg_list, output_dir_name, input_txtg_path):
         tg_tier = tier.new(entryList=tg_list)
         tg_combined.addTier(tg_tier)
 
-        directory_path = os.path.join("./", output_dir_name)
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
+        output_file_path = os.path.join(output_txtg_name)
 
-        output_file_path = os.path.join(directory_path, 'combined_trott.TextGrid')
-
-        new_tier_name= "Speakers-combined - words"
+        new_tier_name = "Speakers-combined - words"
         tg_combined.renameTier(tier_name, new_tier_name)
 
         tg_combined.save(output_file_path, useShortForm=False)
-        print("textgrid saved")
+        print("Merged textgrid saved")
 
         return output_file_path
 
-def main(txtg_path, output_dir_name):
+
+def main(txtg_path, output_txtg_name):
+    print("started merging")
     tg = tgio.openTextgrid(txtg_path)
     individual_entries = get_speaker_entries(tg)
     merged_tg_list = merge_speakerss(individual_entries)
-    gen_new_tg(merged_tg_list, output_dir_name, input_txtg_path)
+    output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path)
+    print("finished merging")
+    return output_path
 
 
 if __name__  == "__main__":
     input_txtg_path = "trott.TextGrid"
-    output_dir_name = "outputs"
-    main(input_txtg_path, output_dir_name)
+    output_txtg_name = "merged_trott"
+    main(input_txtg_path, output_txtg_name)

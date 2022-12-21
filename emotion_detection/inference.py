@@ -11,7 +11,7 @@ import cv2
 config_object = ConfigParser()
 config_object.read("./static/config.ini")
 
-checkpoints = config_object["CHECKPOINTS"]
+checkpoints = config_object["PATHS"]
 checkpoints_path = checkpoints["CHECKPOINTS_PATH"]
 
 
@@ -64,6 +64,7 @@ class Model():
             _, pred = torch.max(out,1)
             index = int(pred)
             label = self.labels[index]
+            # print("label",label)
             return label
 
 
