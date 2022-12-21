@@ -1,4 +1,5 @@
 from praatio import tgio
+import logging
 import os
 
 
@@ -100,18 +101,18 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
         tg_combined.renameTier(tier_name, new_tier_name)
 
         tg_combined.save(output_file_path, useShortForm=False)
-        print("Merged textgrid saved")
+        logging.info(f"Merged TextGrid saved at {output_file_path}.")
 
         return output_file_path
 
 
 def main(txtg_path, output_txtg_name):
-    print("started merging")
+    logging.info(f"STARTED merging speakers of {txtg_path}.")
     tg = tgio.openTextgrid(txtg_path)
     individual_entries = get_speaker_entries(tg)
     merged_tg_list = merge_speakerss(individual_entries)
     output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path)
-    print("finished merging")
+    logging.info(f"FINISHED merging.")
     return output_path
 
 

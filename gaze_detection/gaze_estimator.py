@@ -13,7 +13,6 @@ face_mesh = mp_face_mesh.FaceMesh(
 
 
 def get_gaze_direction(image):
-    text = ""
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # frame back to BGR for OpenCV
     results = face_mesh.process(image)
     if results.multi_face_landmarks:
