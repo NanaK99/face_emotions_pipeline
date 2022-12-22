@@ -7,9 +7,10 @@ from utils import textgrid_generation, merge_speakers, preprocess_tg
 from multiprocessing import Pool
 from configparser import ConfigParser
 from collections import Counter
-from praatio import tgio
+from praatio import textgrid
 import numpy as np
 import argparse
+import logging
 import cv2
 import sys
 import os
@@ -21,6 +22,17 @@ class MyParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+
+config_object = ConfigParser()
+config_object.read("./static/config.ini")
+paths = config_object["PATHS"]
+log_file = paths["LOG_FILE"]
+
+log_file_exists = os.path.exists(log_file)
+if log_file_exists:
+    os.remove(log_file)
+
+logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
 
 parser = MyParser()
 
@@ -74,8 +86,6 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 
 model = inference.Model()
 
-config_object = ConfigParser()
-config_object.read("./static/config.ini")
 BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 
@@ -85,8 +95,7 @@ final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
 
 merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path)
 final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path)
-tg = tgio.openTextgrid(final_tg_path)
-
+tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
 min_num_of_frames = int(video_parameters["MIN_NUM_OF_FRAMES"])
@@ -120,13 +129,13 @@ new_tier_name_list = []
 tier_name_list = tg.tierNameList
 
 while cap.isOpened():
-    tg_gaze = tgio.Textgrid()
-    tg_expr = tgio.Textgrid()
-    tg_body = tgio.Textgrid()
-    tg_emotion = tgio.Textgrid()
+    tg_gaze = textgrid.Textgrid()
+    tg_expr = textgrid.Textgrid()
+    tg_body = textgrid.Textgrid()
+    tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
-        print(f"Working on {tier_name}")
+        logging.info(f"Working on {tier_name}.")
         gaze_entrylist = []
         expr_entrylist = []
         body_entrylist = []
@@ -138,7 +147,7 @@ while cap.isOpened():
             for idx, entry in enumerate(entryList):
                 success, img = cap.read()
                 if not success: break
-                print(f"Working on interval {idx}.....")
+                logging.info(f"Working on interval {idx}...")
                 start = entry.start
                 end = entry.end
                 label = entry.label
@@ -308,11 +317,12 @@ while cap.isOpened():
                         body_entrylist.append((start, end, label))
                         emotion_entrylist.append((start, end, label))
 
-            print(f"Done with {tier_name}")
+            logging.info(f"Done with {tier_name}.")
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                                output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
         except KeyboardInterrupt:
+            logging.exception("Keyboard Interrupt.")
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                       output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
 
@@ -320,10 +330,10 @@ while cap.isOpened():
             cap.release()
             cv2.destroyAllWindows()
 
-    print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
-    print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
-    print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-    print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+    logging.info(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
+    logging.info(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
+    logging.info(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
+    logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     cap.release()
     cv2.destroyAllWindows()
