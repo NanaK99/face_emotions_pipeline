@@ -1,4 +1,4 @@
-from praatio import tgio
+from praatio import textgrid
 import logging
 import os
 
@@ -85,8 +85,8 @@ def merge_speakerss(individual_entries):
 
 def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
-    tg_combined = tgio.Textgrid()
-    tg_original = tgio.openTextgrid(input_txtg_path)
+    tg_combined = textgrid.Textgrid()
+    tg_original = textgrid.openTextgrid(input_txtg_path, includeEmptyIntervals=True)
     tier_name_list = tg_original.tierNameList
     tier_name_list = [tier_name_list[0]]
     for tier_name in tier_name_list:
@@ -100,7 +100,7 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
         new_tier_name = "Speakers-combined - words"
         tg_combined.renameTier(tier_name, new_tier_name)
 
-        tg_combined.save(output_file_path, useShortForm=False)
+        tg_combined.save(output_file_path, format="long_textgrid", includeBlankSpaces=True)
         logging.info(f"Merged TextGrid saved at {output_file_path}.")
 
         return output_file_path
@@ -108,7 +108,7 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
 def main(txtg_path, output_txtg_name):
     logging.info(f"STARTED merging speakers of {txtg_path}.")
-    tg = tgio.openTextgrid(txtg_path)
+    tg = textgrid.openTextgrid(txtg_path, includeEmptyIntervals=True)
     individual_entries = get_speaker_entries(tg)
     merged_tg_list = merge_speakerss(individual_entries)
     output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path)

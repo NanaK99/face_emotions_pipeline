@@ -34,9 +34,9 @@ def save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion
     tg_emotion.renameTier(tier_name, new_tier_name_emotion)
 
     # Saving the text-grids
-    tg_gaze.save(gaze_output_file_path, useShortForm=False)
-    tg_expr.save(expr_output_file_path, useShortForm=False)
-    tg_body.save(body_output_file_path, useShortForm=False)
-    tg_emotion.save(emotion_output_file_path, useShortForm=False)
+    tg_gaze.save(gaze_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    tg_expr.save(expr_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    tg_body.save(body_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    tg_emotion.save(emotion_output_file_path, format="long_textgrid", includeBlankSpaces=True)
 
     return gaze_output_file_path, expr_output_file_path, body_output_file_path, emotion_output_file_path

@@ -6,7 +6,7 @@ from utils import textgrid_generation, merge_speakers, preprocess_tg
 
 from configparser import ConfigParser
 from collections import Counter
-from praatio import tgio
+from praatio import textgrid
 import numpy as np
 import argparse
 import logging
@@ -93,7 +93,7 @@ final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
 
 merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path)
 final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path)
-tg = tgio.openTextgrid(final_tg_path)
+tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
 
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
@@ -128,10 +128,10 @@ new_tier_name_list = []
 tier_name_list = tg.tierNameList
 
 while cap.isOpened():
-    tg_gaze = tgio.Textgrid()
-    tg_expr = tgio.Textgrid()
-    tg_body = tgio.Textgrid()
-    tg_emotion = tgio.Textgrid()
+    tg_gaze = textgrid.Textgrid()
+    tg_expr = textgrid.Textgrid()
+    tg_body = textgrid.Textgrid()
+    tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
         logging.info(f"Working on {tier_name}.")
