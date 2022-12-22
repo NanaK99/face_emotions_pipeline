@@ -7,6 +7,7 @@ def replace_with_zeros(tg_file, tier_name):
     entryList = tier.entryList
 
     intervals = []
+
     for entry in entryList:
         interval = []
         start = entry.start
@@ -46,6 +47,7 @@ def main(txtg_path, output_txtg_name):
         output_file_path = save_new_tg(tg_final, tg, tier_name, new_entrylist, output_txtg_name)
 
     logging.info(f"FINISHED preprocessing.")
+    
     return output_file_path
 
 
