@@ -86,7 +86,7 @@ def merge_speakerss(individual_entries):
 def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
     tg_combined = textgrid.Textgrid()
-    tg_original = textgrid.openTextgrid(input_txtg_path, includeEmptyIntervals=True)
+    tg_original = textgrid.openTextgrid(input_txtg_path, includeEmptyIntervals=False)
 
     tier_name_list = tg_original.tierNameList
     tier_name_list = [tier_name_list[0]]
@@ -109,7 +109,7 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
 def main(txtg_path, output_txtg_name):
     logging.info(f"STARTED merging speakers of {txtg_path}.")
-    tg = textgrid.openTextgrid(txtg_path, includeEmptyIntervals=True)
+    tg = textgrid.openTextgrid(txtg_path, includeEmptyIntervals=False)
     individual_entries = get_speaker_entries(tg)
     merged_tg_list = merge_speakerss(individual_entries)
     output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path)
