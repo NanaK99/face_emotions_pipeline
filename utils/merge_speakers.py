@@ -87,7 +87,6 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
 
     tg_combined = textgrid.Textgrid()
     tg_original = textgrid.openTextgrid(input_txtg_path, includeEmptyIntervals=False)
-
     tier_name_list = tg_original.tierNameList
     tier_name_list = [tier_name_list[0]]
     for tier_name in tier_name_list:
