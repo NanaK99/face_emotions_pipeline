@@ -26,49 +26,27 @@ def get_speaker_entries(tg_file):
 
         speakers_json[tier_name] = intervals
 
-    speaker_1 = speakers_json[list(speakers_json.keys())[0]]
-    speaker_2 = speakers_json[list(speakers_json.keys())[1]]
-    speaker_3 = speakers_json[list(speakers_json.keys())[2]]
-    speaker_4 = speakers_json[list(speakers_json.keys())[3]]
-    speaker_5 = speakers_json[list(speakers_json.keys())[4]]
+    ll = [speakers_json[sp] for sp in speakers_json.keys()]
+     
+    return (*ll,)
 
-    return speaker_1, speaker_2, speaker_3, speaker_4, speaker_5
+#    return [speakers_json[ind] for ind in speakers_json[list(speakers_json.keys())] ]
+    
 
 
 def merge_speakerss(individual_entries):
-    speaker_1 = individual_entries[0]
-    speaker_2 = individual_entries[1]
-    speaker_3 = individual_entries[2]
-    speaker_4 = individual_entries[3]
-    speaker_5 = individual_entries[4]
+    xmins = []
+    xmaxs = []
+    labels = []
 
-    speaker1 = [interval for interval in speaker_1 if interval[2] != "0"]
-    speaker2 = [interval for interval in speaker_2 if interval[2] != "0"]
-    speaker3 = [interval for interval in speaker_3 if interval[2] != "0"]
-    speaker4 = [interval for interval in speaker_4 if interval[2] != "0"]
-    speaker5 = [interval for interval in speaker_5 if interval[2] != "0"]
+    for i in range(len(individual_entries)):
+        for interval in individual_entries[i]:
+            if interval[2] != "0":
+                xmins.append(interval[0])
+                xmaxs.append(interval[1])
+                labels.append(interval[2])
 
-    xmins1 = [interval[0] for interval in speaker1]
-    xmins2 = [interval[0] for interval in speaker2]
-    xmins3 = [interval[0] for interval in speaker3]
-    xmins4 = [interval[0] for interval in speaker4]
-    xmins5 = [interval[0] for interval in speaker5]
-    xmins = xmins1 + xmins2 + xmins3 + xmins4 + xmins5
-
-    xmaxs1 = [interval[1] for interval in speaker1]
-    xmaxs2 = [interval[1] for interval in speaker2]
-    xmaxs3 = [interval[1] for interval in speaker3]
-    xmaxs4 = [interval[1] for interval in speaker4]
-    xmaxs5 = [interval[1] for interval in speaker5]
-    xmaxs = xmaxs1 + xmaxs2 + xmaxs3 + xmaxs4 + xmaxs5
-
-    labels1 = [interval[2] for interval in speaker1]
-    labels2 = [interval[2] for interval in speaker2]
-    labels3 = [interval[2] for interval in speaker3]
-    labels4 = [interval[2] for interval in speaker4]
-    labels5 = [interval[2] for interval in speaker5]
-    labels = labels1 + labels2 + labels3 + labels4 + labels5
-
+    
     xmaxs_sorted = sorted(xmaxs)
     xmins_sorted = sorted(xmins)
 
