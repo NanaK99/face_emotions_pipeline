@@ -145,8 +145,8 @@ while cap.isOpened():
 
         try:
             for idx, entry in enumerate(entryList):
-                success, img = cap.read()
-                if not success: break
+                #success, img = cap.read()
+                #if not success: break
                 logging.info(f"Working on interval {idx}...")
                 start = entry.start
                 end = entry.end
@@ -158,6 +158,7 @@ while cap.isOpened():
                     if int(num_frames) > min_num_of_frames:
                         frame_idx = cap.get(cv2.CAP_PROP_POS_FRAMES)
                         while frame_idx < end*fps:
+                            success, img = cap.read()
                             # To improve performance, optionally mark the image as not writeable to pass by reference.
                             img.flags.writeable = False
                             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
