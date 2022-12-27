@@ -4,7 +4,6 @@ from gaze_detection import gaze_estimator
 from emotion_detection import inference
 from utils import textgrid_generation, merge_speakers, preprocess_tg
 
-from multiprocessing import Pool
 from configparser import ConfigParser
 from collections import Counter
 from praatio import textgrid
@@ -28,11 +27,6 @@ config_object.read("./static/config.ini")
 paths = config_object["PATHS"]
 log_file = paths["LOG_FILE"]
 
-log_file_exists = os.path.exists(log_file)
-if log_file_exists:
-    os.remove(log_file)
-
-logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
 
 parser = MyParser()
 
@@ -42,12 +36,24 @@ parser.add_argument('--input_textgrid', type=str,
                     help='path to the base textgrid', required=True)
 parser.add_argument('--output_dir_name', type=str,
                     help='name of the directory where the generated textgrid files should be saved', required=True)
+parser.add_argument('--verbose', type=bool,
+                    help='a boolean indicating the mode for logging, '
+                         'in case of True, prints will also be visible in the terminal; '
+                         'otherwise the logs will be kept only in the log file', required=True)
 
 args = parser.parse_args()
 
 video_path = args.video
 input_textgrid_path = args.input_textgrid
 output_dir_name = args.output_dir_name
+verbose = args.verbose
+
+if verbose:
+    log_file_exists = os.path.exists(log_file)
+    if log_file_exists:
+        os.remove(log_file)
+
+    logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
 
 VID_EXTENSIONS = ["mp4"]
 TEXTGRID_EXTENSIONS = ["TextGrid"]
@@ -81,7 +87,7 @@ if not os.path.exists(directory_path):
 
 cap = cv2.VideoCapture(video_path)
 
-fps = cap.get(cv2.CAP_PROP_FPS)
+fps = cap.get(cv2.CAP_PROP_FPS)  # 25
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 model = inference.Model()
@@ -93,8 +99,8 @@ paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
 final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
 
-merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path)
-final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path)
+merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
+final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path, verbose)
 tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
@@ -135,6 +141,8 @@ while cap.isOpened():
     tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
+        if verbose:
+            print(f"Working on {tier_name}.")
         logging.info(f"Working on {tier_name}.")
         gaze_entrylist = []
         expr_entrylist = []
@@ -145,8 +153,8 @@ while cap.isOpened():
 
         try:
             for idx, entry in enumerate(entryList):
-                #success, img = cap.read()
-                #if not success: break
+                if verbose:
+                    print(f"Working on interval {idx}...")
                 logging.info(f"Working on interval {idx}...")
                 start = entry.start
                 end = entry.end
@@ -236,6 +244,8 @@ while cap.isOpened():
                             except:
                                 most_common_emotion = ""
 
+                            # print("most common emotion",most_common_emotion)
+
                             one_shoulder_up_down = np.std(one_up_down)
                             both_shoulder_up_down = np.std(both_up_down)
 
@@ -318,6 +328,8 @@ while cap.isOpened():
                         body_entrylist.append((start, end, label))
                         emotion_entrylist.append((start, end, label))
 
+            if verbose:
+                print(f"Done with {tier_name}.")
             logging.info(f"Done with {tier_name}.")
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
                                                output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
@@ -330,6 +342,12 @@ while cap.isOpened():
             sys.exit()
             cap.release()
             cv2.destroyAllWindows()
+
+    if verbose:
+        print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
+        print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
+        print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
+        print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     logging.info(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
     logging.info(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")

@@ -30,8 +30,7 @@ def get_speaker_entries(tg_file):
      
     return (*ll,)
 
-#    return [speakers_json[ind] for ind in speakers_json[list(speakers_json.keys())] ]
-    
+   # return [speakers_json[ind] for ind in speakers_json[list(speakers_json.keys())] ]
 
 
 def merge_speakerss(individual_entries):
@@ -61,7 +60,7 @@ def merge_speakerss(individual_entries):
     return new_entrylist
 
 
-def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
+def gen_new_tg(tg_list, output_txtg_name, input_txtg_path, verbose):
 
     tg_combined = textgrid.Textgrid()
     tg_original = textgrid.openTextgrid(input_txtg_path, includeEmptyIntervals=False)
@@ -79,23 +78,31 @@ def gen_new_tg(tg_list, output_txtg_name, input_txtg_path):
         tg_combined.renameTier(tier_name, new_tier_name)
 
         tg_combined.save(output_file_path, format="long_textgrid", includeBlankSpaces=True)
-        logging.info(f"Merged TextGrid saved at {output_file_path}.")
+        if verbose:
+            print(f"Merged TextGrid saved at {output_file_path.split('/')[-1]}.")
+        logging.info(f"Merged TextGrid saved at {output_file_path.split('/')[-1]}.")
 
         return output_file_path
 
 
-def main(txtg_path, output_txtg_name):
+def main(txtg_path, output_txtg_name, verbose):
+    if verbose:
+        print(f"STARTED merging speakers of {txtg_path}.")
     logging.info(f"STARTED merging speakers of {txtg_path}.")
     tg = textgrid.openTextgrid(txtg_path, includeEmptyIntervals=False)
     individual_entries = get_speaker_entries(tg)
     merged_tg_list = merge_speakerss(individual_entries)
-    output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path)
+    output_path = gen_new_tg(merged_tg_list, output_txtg_name, txtg_path, verbose)
+
+    if verbose:
+        print(f"FINISHED merging.")
     logging.info(f"FINISHED merging.")
 
     return output_path
 
 
 if __name__  == "__main__":
+    verbose = False
     input_txtg_path = "trott.TextGrid"
     output_txtg_name = "merged_trott"
     main(input_txtg_path, output_txtg_name)
