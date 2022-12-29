@@ -20,7 +20,7 @@ pip3 install -r requirements.txt
 ```
 6. Run: 
 ```
-python fp.py --video video.mp4 --input_textgrid input.TextGrid --output_dir_name outputs --verbose False
+python run_fp.py --video video.mp4 --input_textgrid input.TextGrid --output_dir_name outputs --verbose False
 ```
 , where the first argument is the path to the video file, 
 the second argument is the path to the input textgrid (which will be used to generate the output textgrids), and 
