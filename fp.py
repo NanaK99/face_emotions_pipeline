@@ -25,7 +25,6 @@ class MyParser(argparse.ArgumentParser):
 config_object = ConfigParser()
 config_object.read("./static/config.ini")
 paths = config_object["PATHS"]
-log_file = paths["LOG_FILE"]
 
 
 parser = MyParser()
@@ -39,7 +38,15 @@ parser.add_argument('--output_dir_name', type=str,
 parser.add_argument('--verbose', type=bool,
                     help='a boolean indicating the mode for logging, '
                          'in case of True, prints will also be visible in the terminal; '
-                         'otherwise the logs will be kept only in the log file', required=True)
+                         'otherwise the logs will be kept only in the log file', required=False, default=False)
+parser.add_argument('--emotions', default=False,
+                    help='emotions only', required=False, action='store_true')
+parser.add_argument('--expressions', default=False,
+                    help='emotions only', required=False, action='store_true')
+parser.add_argument('--body', default=False,
+                    help='emotions only', required=False, action='store_true')
+parser.add_argument('--gaze', default=False,
+                    help='emotions only', required=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -48,7 +55,16 @@ input_textgrid_path = args.input_textgrid
 output_dir_name = args.output_dir_name
 verbose = args.verbose
 
-if verbose:
+emotions = args.emotions
+body = args.body
+gaze = args.gaze
+expressions = args.expressions
+
+
+type_of_run = sys.argv[1].strip("--")
+log_file = type_of_run+paths["LOG_FILE"]
+
+if not verbose:
     log_file_exists = os.path.exists(log_file)
     if log_file_exists:
         os.remove(log_file)
@@ -98,6 +114,10 @@ IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
 final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
+
+merged_tg_path = "".join(list(merged_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
+final_tg_path = "".join(list(final_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
+
 
 merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
 final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path, verbose)
@@ -172,64 +192,68 @@ while cap.isOpened():
                             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
 
                             # GAZE
-                            gaze_all = gaze_estimator.get_gaze_direction(img)
-                            if gaze_all is not None:
-                                g_text = gaze_all[3]
-                            else:
-                                g_text = ""
-                            gaze_texts.append(g_text)
+                            if gaze:
+                                gaze_all = gaze_estimator.get_gaze_direction(img)
+                                if gaze_all is not None:
+                                    g_text = gaze_all[3]
+                                else:
+                                    g_text = ""
+                                gaze_texts.append(g_text)
 
-                            # HEAD MOVEMENT
-                            face_mov = mediapipe_face.get_face_movement(img)
+                            if body:
+                                # HEAD MOVEMENT
+                                face_mov = mediapipe_face.get_face_movement(img)
 
-                            if face_mov is not None:
+                                if face_mov is not None:
 
-                                if face_mov in ["up", "down", "right", "left"]:
-                                    if face_mov == "left" or face_mov == "right":
-                                        if len(head_shake_idxs) > 0:
-                                            if head_shake_idxs[-1] < frame_idx:
-                                                if head_shake_dir[-1] != face_mov:
+                                    if face_mov in ["up", "down", "right", "left"]:
+                                        if face_mov == "left" or face_mov == "right":
+                                            if len(head_shake_idxs) > 0:
+                                                if head_shake_idxs[-1] < frame_idx:
+                                                    if head_shake_dir[-1] != face_mov:
+                                                        head_shake_idxs.append(frame_idx)
+                                                        head_shake_dir.append(face_mov)
+                                                else:
                                                     head_shake_idxs.append(frame_idx)
-                                                    head_shake_dir.append(face_mov)
                                             else:
                                                 head_shake_idxs.append(frame_idx)
-                                        else:
-                                            head_shake_idxs.append(frame_idx)
-                                            head_shake_dir.append(face_mov)
+                                                head_shake_dir.append(face_mov)
 
-                                    elif face_mov == "up" or face_mov == "down":
-                                        if len(head_nod_idxs) > 0:
-                                            if head_nod_idxs[-1] < frame_idx:
-                                                if head_nod_dir[-1] != face_mov:
+                                        elif face_mov == "up" or face_mov == "down":
+                                            if len(head_nod_idxs) > 0:
+                                                if head_nod_idxs[-1] < frame_idx:
+                                                    if head_nod_dir[-1] != face_mov:
+                                                        head_nod_idxs.append(frame_idx)
+                                                        head_nod_dir.append(face_mov)
+                                                else:
                                                     head_nod_idxs.append(frame_idx)
-                                                    head_nod_dir.append(face_mov)
                                             else:
                                                 head_nod_idxs.append(frame_idx)
-                                        else:
-                                            head_nod_idxs.append(frame_idx)
-                                            head_nod_dir.append(face_mov)
+                                                head_nod_dir.append(face_mov)
 
+                                    else:
+                                        headmove_texts.append(face_mov)
                                 else:
-                                    headmove_texts.append(face_mov)
-                            else:
-                                headmove_texts.append("")
+                                    headmove_texts.append("")
 
-                            # SHOULDER MOVEMENT
-                            body_move = mediapipe_shoulders.get_body_movement(img)
-                            if body_move is not None:
-                                one_up_down.append(body_move[0])
-                                both_up_down.append(body_move[1])
-                                lean_in_out.append(body_move[2])
+                                # SHOULDER MOVEMENT
+                                body_move = mediapipe_shoulders.get_body_movement(img)
+                                if body_move is not None:
+                                    one_up_down.append(body_move[0])
+                                    both_up_down.append(body_move[1])
+                                    lean_in_out.append(body_move[2])
 
-                            # FACE EXPRESSION
-                            face_expr = face_visible_expressions.get_face_expression(img)
+                            if expressions:
+                                # FACE EXPRESSION
+                                face_expr = face_visible_expressions.get_face_expression(img)
 
-                            if face_expr is not None:
-                                faceexpr_texts.append(face_expr)
+                                if face_expr is not None:
+                                    faceexpr_texts.append(face_expr)
 
-                            # EMOTION
-                            emotion_label = model.fer(img)
-                            emotion_texts.append(emotion_label)
+                            if emotions:
+                                # EMOTION
+                                emotion_label = model.fer(img)
+                                emotion_texts.append(emotion_label)
 
                             frame_idx += 1
 
@@ -332,12 +356,12 @@ while cap.isOpened():
                 print(f"Done with {tier_name}.")
             logging.info(f"Done with {tier_name}.")
             textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
+                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
 
         except KeyboardInterrupt:
             logging.exception("Keyboard Interrupt.")
             textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name)
+                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name,type_of_run)
 
             sys.exit()
             cap.release()

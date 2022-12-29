@@ -2,7 +2,7 @@ import os
 
 
 def save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                   output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name):
+                   output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run=None):
     gaze_tier = tier.new(entryList=gaze_entrylist)
     expr_tier = tier.new(entryList=expr_entrylist)
     body_tier = tier.new(entryList=body_entrylist)
@@ -34,9 +34,13 @@ def save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion
     tg_emotion.renameTier(tier_name, new_tier_name_emotion)
 
     # Saving the text-grids
-    tg_gaze.save(gaze_output_file_path, format="long_textgrid", includeBlankSpaces=True)
-    tg_expr.save(expr_output_file_path, format="long_textgrid", includeBlankSpaces=True)
-    tg_body.save(body_output_file_path, format="long_textgrid", includeBlankSpaces=True)
-    tg_emotion.save(emotion_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    if type_of_run == "gaze":
+        tg_gaze.save(gaze_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    if type_of_run == "expressions":
+        tg_expr.save(expr_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    if type_of_run == "body":
+        tg_body.save(body_output_file_path, format="long_textgrid", includeBlankSpaces=True)
+    if type_of_run == "emotions":
+        tg_emotion.save(emotion_output_file_path, format="long_textgrid", includeBlankSpaces=True)
 
     return gaze_output_file_path, expr_output_file_path, body_output_file_path, emotion_output_file_path
