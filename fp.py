@@ -35,10 +35,10 @@ parser.add_argument('--input_textgrid', type=str,
                     help='path to the base textgrid', required=True)
 parser.add_argument('--output_dir_name', type=str,
                     help='name of the directory where the generated textgrid files should be saved', required=True)
-parser.add_argument('--verbose', type=bool,
+parser.add_argument('--verbose',
                     help='a boolean indicating the mode for logging, '
                          'in case of True, prints will also be visible in the terminal; '
-                         'otherwise the logs will be kept only in the log file', required=False, default=False)
+                         'otherwise the logs will be kept only in the log file', required=False, default=False, action='store_true')
 parser.add_argument('--emotions', default=False,
                     help='emotions only', required=False, action='store_true')
 parser.add_argument('--expressions', default=False,
@@ -63,6 +63,8 @@ expressions = args.expressions
 
 type_of_run = sys.argv[1].strip("--")
 log_file = type_of_run+paths["LOG_FILE"]
+
+
 
 if not verbose:
     log_file_exists = os.path.exists(log_file)
