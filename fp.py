@@ -48,6 +48,9 @@ parser.add_argument('--body', default=False,
 parser.add_argument('--gaze', default=False,
                     help='emotions only', required=False, action='store_true')
 
+parser.add_argument('--debug', default=False,
+                    help='emotions only', required=False, action='store_true')
+
 args = parser.parse_args()
 
 video_path = args.video
@@ -60,6 +63,7 @@ body = args.body
 gaze = args.gaze
 expressions = args.expressions
 
+debug = args.debug
 
 type_of_run = sys.argv[1].strip("--")
 log_file = type_of_run+paths["LOG_FILE"]
@@ -260,92 +264,106 @@ while cap.isOpened():
                             frame_idx += 1
 
                         else:
-                            gaze_counter = Counter(gaze_texts)
-                            mediapipe_counter = Counter(headmove_texts)
-                            face_expr_counter = Counter(faceexpr_texts)
-                            emotion_counter = Counter(emotion_texts)
+                            if not debug:
+                                gaze_counter = Counter(gaze_texts)
+                                mediapipe_counter = Counter(headmove_texts)
+                                face_expr_counter = Counter(faceexpr_texts)
+                                emotion_counter = Counter(emotion_texts)
 
-                            try:
-                                most_common_emotion = emotion_counter.most_common(1)[0][0]
-                            except:
-                                most_common_emotion = ""
+                                print (gaze_texts,headmove_texts,faceexpr_texts,emotion_texts)
 
-                            # print("most common emotion",most_common_emotion)
+                                try:
+                                    most_common_emotion = emotion_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_emotion = ""
 
-                            one_shoulder_up_down = np.std(one_up_down)
-                            both_shoulder_up_down = np.std(both_up_down)
+                                # print("most common emotion",most_common_emotion)
 
-                            if len(one_up_down) > 0 and len(both_up_down) and len(lean_in_out) > 0:
-                                if one_shoulder_up_down > one_shoulder_movement or both_shoulder_up_down > both_shoulder_movement:
-                                    most_common_body_move = "SHOULDER MOVEMENT"
-                                elif (abs(np.min(lean_in_out)) - abs(np.mean(lean_in_out))) < -1 * lean_in_out_thresh:
-                                    most_common_body_move = "LEAN IN"
-                                elif (abs(np.max(lean_in_out)) - abs(np.mean(lean_in_out))) > lean_in_out_thresh:
-                                    most_common_body_move = "LEAN OUT"
+                                one_shoulder_up_down = np.std(one_up_down)
+                                both_shoulder_up_down = np.std(both_up_down)
+
+                                if len(one_up_down) > 0 and len(both_up_down) and len(lean_in_out) > 0:
+                                    if one_shoulder_up_down > one_shoulder_movement or both_shoulder_up_down > both_shoulder_movement:
+                                        most_common_body_move = "SHOULDER MOVEMENT"
+                                    elif (abs(np.min(lean_in_out)) - abs(np.mean(lean_in_out))) < -1 * lean_in_out_thresh:
+                                        most_common_body_move = "LEAN IN"
+                                    elif (abs(np.max(lean_in_out)) - abs(np.mean(lean_in_out))) > lean_in_out_thresh:
+                                        most_common_body_move = "LEAN OUT"
+                                    else:
+                                        most_common_body_move = ""
                                 else:
                                     most_common_body_move = ""
+
+                                head_nod_dir_len = len(head_nod_dir)
+                                head_shake_dir_len = len(head_shake_dir)
+
+                                if len(headmove_texts) > 0:
+                                    mediapipe_counter_most_common = mediapipe_counter.most_common(1)[0][1]
+                                else:
+                                    mediapipe_counter_most_common = 0
+
+                                if head_shake_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_shake_dir_len // num_of_diff_head_positions > head_nod_dir_len // num_of_diff_head_positions:
+                                    most_common_head_move = "HEAD SHAKE"
+                                elif head_nod_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_nod_dir_len // num_of_diff_head_positions > head_shake_dir_len // num_of_diff_head_positions:
+                                    most_common_head_move = "HEAD NOD"
+                                else:
+                                    most_common_head_move = ""
+
+                                try:
+                                    most_common_gaze = gaze_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_gaze = ""
+
+                                try:
+                                    most_common_face_expr = face_expr_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_face_expr = ""
+
+                                gaze_texts = []
+                                headmove_texts = []
+                                faceexpr_texts = []
+                                shoulder_texts = []
+                                emotion_texts = []
+
+                                head_nod_idxs = []
+                                head_shake_idxs = []
+                                head_shake_dir = []
+                                head_nod_dir = []
+                                one_up_down = []
+                                both_up_down = []
+                                lean_in_out = []
+
+                                gaze_label = most_common_gaze
+                                expression_label = most_common_face_expr
+
+                                if len(most_common_body_move) == 0 and len(most_common_head_move) == 0:
+                                    body_label = ""
+                                elif len(most_common_body_move) == 0 and len(most_common_head_move) !=0:
+                                    body_label = most_common_head_move
+                                elif len(most_common_head_move) == 0 and len(most_common_body_move) != 0:
+                                    body_label = most_common_body_move
+                                else:
+                                    body_label = f"{most_common_head_move}, {most_common_body_move}"
+
+                                emotion_label = most_common_emotion
+                                if emotion_label == "null":
+                                    emotion_label = ""
+
+                                gaze_entrylist.append((start, end, gaze_label))
+                                expr_entrylist.append((start, end, expression_label))
+                                body_entrylist.append((start, end, body_label))
+                                emotion_entrylist.append((start, end, emotion_label))
                             else:
-                                most_common_body_move = ""
+                                gaze_label = ','.join(gaze_texts)
+                                expression_label = ','.join(faceexpr_texts)
+                                body_label = ','.join(headmove_texts)
+                                emotion_label = ','.join(emotion_texts)
 
-                            head_nod_dir_len = len(head_nod_dir)
-                            head_shake_dir_len = len(head_shake_dir)
+                                gaze_entrylist.append((start, end, gaze_label))
+                                expr_entrylist.append((start, end, expression_label))
+                                body_entrylist.append((start, end, body_label))
+                                emotion_entrylist.append((start, end, emotion_label))
 
-                            if len(headmove_texts) > 0:
-                                mediapipe_counter_most_common = mediapipe_counter.most_common(1)[0][1]
-                            else:
-                                mediapipe_counter_most_common = 0
-
-                            if head_shake_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_shake_dir_len // num_of_diff_head_positions > head_nod_dir_len // num_of_diff_head_positions:
-                                most_common_head_move = "HEAD SHAKE"
-                            elif head_nod_dir_len // num_of_diff_head_positions > mediapipe_counter_most_common and head_nod_dir_len // num_of_diff_head_positions > head_shake_dir_len // num_of_diff_head_positions:
-                                most_common_head_move = "HEAD NOD"
-                            else:
-                                most_common_head_move = ""
-
-                            try:
-                                most_common_gaze = gaze_counter.most_common(1)[0][0]
-                            except:
-                                most_common_gaze = ""
-
-                            try:
-                                most_common_face_expr = face_expr_counter.most_common(1)[0][0]
-                            except:
-                                most_common_face_expr = ""
-
-                            gaze_texts = []
-                            headmove_texts = []
-                            faceexpr_texts = []
-                            shoulder_texts = []
-                            emotion_texts = []
-
-                            head_nod_idxs = []
-                            head_shake_idxs = []
-                            head_shake_dir = []
-                            head_nod_dir = []
-                            one_up_down = []
-                            both_up_down = []
-                            lean_in_out = []
-
-                            gaze_label = most_common_gaze
-                            expression_label = most_common_face_expr
-
-                            if len(most_common_body_move) == 0 and len(most_common_head_move) == 0:
-                                body_label = ""
-                            elif len(most_common_body_move) == 0 and len(most_common_head_move) !=0:
-                                body_label = most_common_head_move
-                            elif len(most_common_head_move) == 0 and len(most_common_body_move) != 0:
-                                body_label = most_common_body_move
-                            else:
-                                body_label = f"{most_common_head_move}, {most_common_body_move}"
-
-                            emotion_label = most_common_emotion
-                            if emotion_label == "null":
-                                emotion_label = ""
-
-                            gaze_entrylist.append((start, end, gaze_label))
-                            expr_entrylist.append((start, end, expression_label))
-                            body_entrylist.append((start, end, body_label))
-                            emotion_entrylist.append((start, end, emotion_label))
 
                     else:
                         label = ""
