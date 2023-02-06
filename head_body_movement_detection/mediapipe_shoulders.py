@@ -4,7 +4,18 @@ import math as m
 import argparse
 import cv2
 import logging
+import scipy
 
+
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+blue = (255, 127, 0)
+red = (50, 50, 255)
+green = (127, 255, 0)
+dark_blue = (127, 20, 0)
+light_green = (127, 233, 100)
+yellow = (0, 255, 255)
+pink = (255, 0, 255)
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
@@ -25,6 +36,11 @@ def findAngle(x1, y1, x2, y2):
     return degree
 
 
+def f_test(arr1, arr2):
+    f, p = scipy.stats.f_oneway(arr1, arr2)
+    return f, p
+
+
 def findDistance(x1, y1, x2, y2):
     dist = m.sqrt((x2-x1)**2+(y2-y1)**2)
     return dist
@@ -38,6 +54,15 @@ def get_aspect_ratio(top, bottom, right, left):
   height = dist.euclidean([top.x, top.y], [bottom.x, bottom.y])
   width = dist.euclidean([right.x, right.y], [left.x, left.y])
   return height / width
+
+
+def get_shoulder_visbility(right_shoulder, left_shoulder):
+    if right_shoulder.visibility >= 0.8 and left_shoulder.visibility >= 0.8:
+        return "Visible"
+    elif (right_shoulder.visibility >= 0.8 and left_shoulder.visibility < 0.8) or (left_shoulder.visibility >= 0.8 and right_shoulder.visibility < 0.8):
+        return "Partially visible"
+    else:
+        "Not visible"
 
 
 def get_body_movement(image):
@@ -81,6 +106,8 @@ def get_body_movement(image):
         # return (shoulder_angle, (left_shoulder.y + right_shoulder.y)/2, (left_shoulder.z + right_shoulder.z)/2)
 
 
+def midpoint(x1, x2, y1, y2):
+    return (x1 + x2) / 2, (y1 + y2) / 2
 
 
 if __name__ == "__main__":
@@ -119,6 +146,7 @@ if __name__ == "__main__":
     left_dists = []
     right_stds = []
     left_stds = []
+    mids = []
 
     if cap.isOpened() == False:
         print("Error opening video file")
@@ -133,10 +161,11 @@ if __name__ == "__main__":
             # print(stdevs_shr)
             # print(stdevs_mol)
             # print(stdevs_mor)
-            print(right_stds)
-            print(left_stds)
+            # print(right_stds)
+            # print(left_stds)
+            pass
 
-            break
+            # break
         frame_index = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         # print("Current frame number:", frame_index)
         # print("FRAME COUNTER -------------->", frame_counter)
@@ -144,10 +173,14 @@ if __name__ == "__main__":
         if results.pose_landmarks is None:
             continue
         landmarks = results.pose_landmarks.landmark
+
         left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
         right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
         mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
         mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
+
+        # print("LEFT",left_shoulder)
+        # print("RIGHT",right_shoulder)
 
         # one_up_down.append(body_mov[0])
         # both_up_down.append(body_mov[1])
@@ -161,21 +194,42 @@ if __name__ == "__main__":
         #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         import numpy as np
 
-        left_sh = np.array([left_shoulder.x, left_shoulder.y, left_shoulder.z])
-        right_sh = np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z])
+        # left_sh = np.array([left_shoulder.x, left_shoulder.y, left_shoulder.z])
+        # right_sh = np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z])
         # SHOULDER LINE COEFFICIENTS
-        a = left_sh[1] - right_sh[1]
-        b = left_sh[0] - right_sh[0]
-        c = right_sh[0] * left_sh[1] - left_sh[0] * right_sh[1]
+        # a = left_sh[1] - right_sh[1]
+        # b = left_sh[0] - right_sh[0]
+        # c = right_sh[0] * left_sh[1] - left_sh[0] * right_sh[1]
         # LEFT DISTANCE
-        m_l = np.array([mouth_left.x, mouth_left.y, mouth_left.z])
-        left_distance = np.abs((a * m_l[0] + b * m_l[1] + c) / np.sqrt(a**2 + b**2))
-        left_dists.append(left_distance)
+        # m_l = np.array([mouth_left.x, mouth_left.y, mouth_left.z])
+        # left_distance = np.abs((a * m_l[0] + b * m_l[1] + c) / np.sqrt(a**2 + b**2))
+        # left_dists.append(left_distance)
 
         # RIGHT DISTANCE
-        m_r = np.array([mouth_right.x, mouth_right.y, mouth_right.z])
-        right_distance = np.abs((a * m_r[0] + b * m_r[1] + c) / np.sqrt(a**2 + b**2))
-        right_dists.append(right_distance)
+        # m_r = np.array([mouth_right.x, mouth_right.y, mouth_right.z])
+        # right_distance = np.abs((a * m_r[0] + b * m_r[1] + c) / np.sqrt(a**2 + b**2))
+        # right_dists.append(right_distance)
+
+        ML_x = mouth_left.x
+        ML_y = mouth_left.y
+
+        MR_x = mouth_right.x
+        MR_y = mouth_right.y
+
+        l_shldr_x = left_shoulder.x
+        l_shldr_y = left_shoulder.y
+        # Right shoulder
+        r_shldr_x = right_shoulder.x
+        r_shldr_y = right_shoulder.y
+
+        mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
+        # print("!!!", ML_x, ML_y, MR_x, MR_y, mid_mouth_y, mid_mouth_x)
+        mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
+        # print("@@@",mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
+
+        middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
+        # print("###",middle_mouth_shoulder_dist)
+        mids.append(middle_mouth_shoulder_dist)
 
         # P1 = np.array([left_shoulder.x, left_shoulder.y, left_shoulder.y])
         # P2 = np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z])
@@ -213,12 +267,24 @@ if __name__ == "__main__":
             # stdevs_mor.append(stdev_mor)
 
             # RIGHT AND LEFT DISTANCES
-            stdev_right = statistics.stdev(right_dists)
-            right_stds.append(stdev_right)
+            # stdev_right = statistics.stdev(right_dists)
+            # right_stds.append(stdev_right)
+            #
+            # stdev_left = statistics.stdev(left_dists)
+            # left_stds.append(stdev_left)
 
-            stdev_left = statistics.stdev(left_dists)
-            left_stds.append(stdev_left)
+            # print()
+            # cv2.putText(frame, f"right sh {r_shldr_x:.2f}, {r_shldr_y:.2f}", font, 0.9, blue, 2)
 
+            mids_stdev = statistics.stdev(mids)
+            # print(mids)
+            mids_stdev = mids_stdev*1000
+            print(mids_stdev)
+            if mids_stdev > 15:
+                print("NOD")
+            elif (mids_stdev < 15 and mids_stdev > 12):
+                print("SHOULDERS")
+            cv2.putText(frame, f"mid stdevs {mids_stdev}", (150, 30), font, 0.9, blue, 2)
             # ds = []
             # sh_l = []
             # sh_r = []
@@ -229,10 +295,12 @@ if __name__ == "__main__":
             # stdevs_shr = []
             # stdevs_mor = []
             # stdevs_mol = []
-            right_dists = []
-            left_dists = []
+            # right_dists = []
+            # left_dists = []
             # left_stds = []
             # right_stds = []
+            mids = []
+
 
 
         # draws lines in 3d graph, do not need now
