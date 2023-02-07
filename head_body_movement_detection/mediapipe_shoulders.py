@@ -111,7 +111,8 @@ def midpoint(x1, x2, y1, y2):
 
 
 if __name__ == "__main__":
-
+    text = ""
+    mids_stdev = 0
     parser = argparse.ArgumentParser(description='Process some integers.')
     # parser.add_argument('--start', metavar='N', type=int,
     #                     help='an integer for the accumulator')
@@ -147,6 +148,12 @@ if __name__ == "__main__":
     right_stds = []
     left_stds = []
     mids = []
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+
+    # Define the codec and create a VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('shoulder_nod_res.mp4', fourcc, 20.0, (frame_width, frame_height))
 
     if cap.isOpened() == False:
         print("Error opening video file")
@@ -163,7 +170,7 @@ if __name__ == "__main__":
             # print(stdevs_mor)
             # print(right_stds)
             # print(left_stds)
-            pass
+            break
 
             # break
         frame_index = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
@@ -278,13 +285,27 @@ if __name__ == "__main__":
 
             mids_stdev = statistics.stdev(mids)
             # print(mids)
-            mids_stdev = mids_stdev*1000
+            mids_stdev = mids_stdev*10000
             print(mids_stdev)
-            if mids_stdev > 15:
-                print("NOD")
-            elif (mids_stdev < 15 and mids_stdev > 12):
-                print("SHOULDERS")
-            cv2.putText(frame, f"mid stdevs {mids_stdev}", (150, 30), font, 0.9, blue, 2)
+            # print(mids_stdev)
+            if mids_stdev > 50:
+                print(f"{mids_stdev}: NOD")
+                text = "NOD"
+                # cv2.putText(frame, f"{mids_stdev :3f}; NOD", (150, 60), font, 1.5, blue, 2)
+            elif (mids_stdev < 50 and mids_stdev > 35):
+                text = "SHOULDERS"
+                print(f"{mids_stdev}: SHOULDERS")
+                # cv2.putText(frame, f"{mids_stdev :3f}; SHOULDERS", (150, 60), font, 1.5, blue, 2)
+            # Get the resolution of the frames in the video stream
+            # frame_width = int(cap.get(3))
+            # frame_height = int(cap.get(4))
+            #
+            # # Define the codec and create a VideoWriter object
+            # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            # out = cv2.VideoWriter('shoulder_nod_res.mp4', fourcc, 20.0, (frame_width, frame_height))
+            # out.write(frame)
+
+            # cv2.putText(frame, f"mid stdevs {mids_stdev}", (150, 30), font, 0.9, blue, 2)
             # ds = []
             # sh_l = []
             # sh_r = []
@@ -310,10 +331,18 @@ if __name__ == "__main__":
         #     mp_pose.POSE_CONNECTIONS,
         #     landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
+        cv2.putText(frame, f"{mids_stdev :3f}; {text}", (150, 60), font, 1.5, blue, 2)
+        mids_stdev = 0
+        text = ""
+
         cv2.imshow('Frame', frame)
+        out.write(frame)
 
         frame_counter += 1
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
 
 cap.release()
+out.release()
+cv2.destroyAllWindows()
+
