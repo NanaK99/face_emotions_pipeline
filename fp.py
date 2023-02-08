@@ -111,10 +111,9 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 
 model = inference.Model()
 
-BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 
-HEAD_NOD = config_object["HEAD_MOVEMENT"]
+BODY_MOVEMENT = config_object["HEAD_MOVEMENT"]
 
 paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
@@ -136,13 +135,9 @@ for expr in IGNORE_EXPRS:
     ignore_exprs.append(IGNORE_EXPRS[expr])
 
 
-one_shoulder_movement = int(BODY["SHOULDER_ANGLE_STD"])
-both_shoulder_movement = float(BODY["BOTH_SHOULDERS_Y_STD"])
-lean_in_out_thresh = float(BODY["BOTH_SHOULDERS_Z_DIFF"])
-num_of_diff_head_positions = int(BODY["NUM_OF_DIFF_HEAD_POSITIONS"])
-
-headnod_normal = float(HEAD_NOD["HEADNOD_MEAN"])
-headnod_std = float(HEAD_NOD["HEADNOD_STD"])
+nod_std = float(BODY_MOVEMENT["NOD_STDEV"])
+sh_std_upper_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_UPPER_BOUND"])
+sh_std_lower_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_LOWER_BOUND"])
 
 gaze_texts = []
 headshake_texts = []
@@ -294,9 +289,9 @@ while cap.isOpened():
                                 # HEAD NOD or SHOULDER MOVEMENT
                                 mids_stdev = statistics.stdev(mids)
                                 mids_stdev = mids_stdev * 10000
-                                if mids_stdev > NOD_STDEV:
+                                if mids_stdev > nod_std:
                                     text = "NOD"
-                                elif (mids_stdev < SHOULDER_STDEV_UPPER_BOUND and mids_stdev > SHOULDER_STDEV_LOWER_BOUND):
+                                elif (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
                                     text = "SHOULDERS"
                                 else:
                                     text = ""
