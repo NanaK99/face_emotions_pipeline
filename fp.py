@@ -1,7 +1,7 @@
 from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
 from face_expr_detection import face_visible_expressions
 from gaze_detection import gaze_estimator
-# from emotion_detection import inference
+from emotion_detection import inference
 from utils import textgrid_generation, merge_speakers, preprocess_tg, head_nod
 
 from configparser import ConfigParser
@@ -45,8 +45,8 @@ parser.add_argument('--expressions', default=False,
                     help='expressions only', required=False, action='store_true')
 parser.add_argument('--body', default=False,
                     help='body only only', required=False, action='store_true')
-# parser.add_argument('--emotions', default=False,
-#                     help='emotions only', required=False, action='store_true')
+parser.add_argument('--emotions', default=False,
+                    help='emotions only', required=False, action='store_true')
 
 
 args = parser.parse_args()
@@ -59,21 +59,18 @@ verbose = args.verbose
 gaze = args.gaze
 body = args.body
 expressions = args.expressions
-# emotions = args.emotions
+emotions = args.emotions
 
 
 type_of_run = sys.argv[1].strip("--")
 log_file = type_of_run+paths["LOG_FILE"]
 
-# print("verbose",verbose, type(verbose))
 if verbose:
-    # print("####")
     log_file_exists = os.path.exists(log_file)
     if log_file_exists:
         os.remove(log_file)
 
     logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
-    # print("log file created")
 
 VID_EXTENSIONS = ["mp4"]
 TEXTGRID_EXTENSIONS = ["TextGrid"]
@@ -110,7 +107,7 @@ cap = cv2.VideoCapture(video_path)
 fps = cap.get(cv2.CAP_PROP_FPS)  # 25
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# model = inference.Model()
+model = inference.Model()
 
 BODY = config_object["BODY_MOVEMENT"]
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
@@ -146,22 +143,18 @@ headnod_normal = float(HEAD_NOD["HEADNOD_MEAN"])
 headnod_std = float(HEAD_NOD["HEADNOD_STD"])
 
 gaze_texts = []
-# headmove_texts = []
 headshake_texts = []
-# headnod_texts = []
 headnod_rights = []
 headnod_lefts = []
 faceexpr_texts = []
 shoulder_texts = []
-# emotion_texts = []
+emotion_texts = []
 
 one_up_down = []
 both_up_down = []
 lean_in_out = []
 head_shake_dir = []
 head_nod_dir = []
-# head_shake_idxs = []
-# head_nod_idxs = []
 mids = []
 
 shoulder_text = ""
@@ -178,7 +171,7 @@ while cap.isOpened():
     tg_gaze = textgrid.Textgrid()
     tg_expr = textgrid.Textgrid()
     tg_body = textgrid.Textgrid()
-    # tg_emotion = textgrid.Textgrid()
+    tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
         if verbose:
@@ -187,7 +180,7 @@ while cap.isOpened():
         gaze_entrylist = []
         expr_entrylist = []
         body_entrylist = []
-        # emotion_entrylist = []
+        emotion_entrylist = []
         tier = tg.tierDict[tier_name]
         entryList = tier.entryList
 
