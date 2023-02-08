@@ -65,6 +65,10 @@ def get_shoulder_visbility(right_shoulder, left_shoulder):
         "Not visible"
 
 
+def midpoint(x1, x2, y1, y2):
+    return (x1 + x2) / 2, (y1 + y2) / 2
+
+
 def get_body_movement(image):
         # Process the image and detect the holistic
         results = holistic.process(image)
@@ -83,31 +87,22 @@ def get_body_movement(image):
         mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
         mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
 
-        left_sh = np.array([left_shoulder.x, left_shoulder.y, left_shoulder.z])
-        right_sh = np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z])
+        ML_x = mouth_left.x
+        ML_y = mouth_left.y
+        MR_x = mouth_right.x
+        MR_y = mouth_right.y
 
-        # SHOULDER LINE COEFFICIENTS
-        a = left_sh[1] - right_sh[1]
-        b = left_sh[0] - right_sh[0]
-        c = right_sh[0] * left_sh[1] - left_sh[0] * right_sh[1]
+        l_shldr_x = left_shoulder.x
+        l_shldr_y = left_shoulder.y
+        r_shldr_x = right_shoulder.x
+        r_shldr_y = right_shoulder.y
 
-        # LEFT DISTANCE
-        m_l = np.array([mouth_left.x, mouth_left.y, mouth_left.z])
-        left_distance = np.abs((a * m_l[0] + b * m_l[1] + c) / np.sqrt(a**2 + b**2))
-        left_dists.append(left_distance)
+        mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
+        mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
 
-        # RIGHT DISTANCE
-        m_r = np.array([mouth_right.x, mouth_right.y, mouth_right.z])
-        right_distance = np.abs((a * m_r[0] + b * m_r[1] + c) / np.sqrt(a**2 + b**2))
-        right_dists.append(right_distance)
+        middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
 
-        return right_dists, left_dists
-        # logging.info(f"shoulders, {shoulder_angle}, {(left_shoulder.y + right_shoulder.y)/2}, {(left_shoulder.z + right_shoulder.z)/2}")
-        # return (shoulder_angle, (left_shoulder.y + right_shoulder.y)/2, (left_shoulder.z + right_shoulder.z)/2)
-
-
-def midpoint(x1, x2, y1, y2):
-    return (x1 + x2) / 2, (y1 + y2) / 2
+        return middle_mouth_shoulder_dist
 
 
 if __name__ == "__main__":
