@@ -44,10 +44,13 @@ parser.add_argument('--gaze', default=False,
 parser.add_argument('--expressions', default=False,
                     help='expressions only', required=False, action='store_true')
 parser.add_argument('--body', default=False,
-                    help='body only only', required=False, action='store_true')
+                    help='body only', required=False, action='store_true')
 parser.add_argument('--emotions', default=False,
                     help='emotions only', required=False, action='store_true')
 
+
+parser.add_argument('--debug', default=False,
+                    help='emotions only', required=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -61,16 +64,15 @@ body = args.body
 expressions = args.expressions
 emotions = args.emotions
 
+debug = args.debug
 
 type_of_run = sys.argv[1].strip("--")
 log_file = type_of_run+paths["LOG_FILE"]
 
-if verbose:
-    log_file_exists = os.path.exists(log_file)
-    if log_file_exists:
-        os.remove(log_file)
-
-    logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
+log_file_exists = os.path.exists(log_file)
+if log_file_exists:
+    os.remove(log_file)
+logging.basicConfig(filename=log_file, level=logging.INFO,  format="%(asctime)s %(message)s", filemode="a")
 
 VID_EXTENSIONS = ["mp4"]
 TEXTGRID_EXTENSIONS = ["TextGrid"]
@@ -259,92 +261,104 @@ while cap.isOpened():
                             frame_idx += 1
 
                         else:
-                            logging.info(f"Summarizing the interval results.")
+                            if not debug:
+                            
+                                logging.info(f"Summarizing the interval results.")
 
-                            gaze_counter = Counter(gaze_texts)
-                            face_expr_counter = Counter(faceexpr_texts)
-                            emotion_counter = Counter(emotion_texts)
+                                gaze_counter = Counter(gaze_texts)
+                                face_expr_counter = Counter(faceexpr_texts)
+                                emotion_counter = Counter(emotion_texts)
 
-                            try:
-                                most_common_emotion = emotion_counter.most_common(1)[0][0]
-                            except:
-                                most_common_emotion = ""
+                                try:
+                                    most_common_emotion = emotion_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_emotion = ""
 
-                            head_shake_dir_len = len(head_shake_dir)
+                                head_shake_dir_len = len(head_shake_dir)
 
-                            if len(head_shake_dir) / 3 > 1:
-                                head_shake_text = "HEAD SHAKE"
+                                if len(head_shake_dir) / 3 > 1:
+                                    head_shake_text = "HEAD SHAKE"
+                                else:
+                                    head_shake_text = ""
+
+                                try:
+                                    most_common_gaze = gaze_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_gaze = ""
+
+                                try:
+                                    most_common_face_expr = face_expr_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_face_expr = ""
+
+                                # HEAD NOD or SHOULDER MOVEMENT
+                                mids_stdev = statistics.stdev(mids)
+                                mids_stdev = mids_stdev * 10000
+                                if mids_stdev > NOD_STDEV:
+                                    text = "NOD"
+                                elif (mids_stdev < SHOULDER_STDEV_UPPER_BOUND and mids_stdev > SHOULDER_STDEV_LOWER_BOUND):
+                                    text = "SHOULDERS"
+                                else:
+                                    text = ""
+
+                                gaze_texts = []
+                                headshake_texts = []
+                                faceexpr_texts = []
+                                emotion_texts = []
+                                head_shake_dir = []
+                                mids = []
+
+                                gaze_label = most_common_gaze
+                                expression_label = most_common_face_expr
+
+                                if text == "NOD":
+                                    head_nod_text = "HEAD NOD"
+                                elif text == "SHOULDERS":
+                                    shoulder_text = "SHOULDER MOVEMENT"
+
+                                if len(head_shake_text) == 0 and len(head_nod_text) == 0:
+                                    most_common_head_move = ""
+                                elif len(head_shake_text) != 0 and len(head_nod_text) == 0:
+                                    most_common_head_move = f"{head_shake_text}"
+                                elif len(head_shake_text) == 0 and len(head_nod_text) != 0:
+                                    most_common_head_move = f"{head_nod_text}"
+                                else:
+                                    most_common_head_move = f"{head_shake_text}, {head_nod_text}"
+
+                                if len(shoulder_text) == 0 and len(most_common_head_move) == 0:
+                                    body_label = ""
+                                elif len(shoulder_text) == 0 and len(most_common_head_move) != 0:
+                                    body_label = most_common_head_move
+                                elif len(shoulder_text) != 0 and len(most_common_head_move) == 0:
+                                    body_label = shoulder_text
+                                else:
+                                    body_label = f"{most_common_head_move}, {shoulder_text}"
+
+                                emotion_label = most_common_emotion
+                                if emotion_label == "null":
+                                    emotion_label = ""
+
+                                gaze_entrylist.append((start, end, gaze_label))
+                                expr_entrylist.append((start, end, expression_label))
+                                body_entrylist.append((start, end, body_label))
+                                emotion_entrylist.append((start, end, emotion_label))
+
+                                # for saving the video with labels (expr, gaze, body)
+                                final_text = f"{gaze_label}, {expression_label}, {body_label}"
+                                # cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
+                                # cv2.imshow('Recording...', img)
+                                # out.write(img)
+                                
                             else:
-                                head_shake_text = ""
+                                gaze_label = ','.join(gaze_texts)
+                                expression_label = ','.join(faceexpr_texts)
+                                body_label = ','.join(headmove_texts)
+                                emotion_label = ','.join(emotion_texts)
 
-                            try:
-                                most_common_gaze = gaze_counter.most_common(1)[0][0]
-                            except:
-                                most_common_gaze = ""
-
-                            try:
-                                most_common_face_expr = face_expr_counter.most_common(1)[0][0]
-                            except:
-                                most_common_face_expr = ""
-
-                            # HEAD NOD or SHOULDER MOVEMENT
-                            mids_stdev = statistics.stdev(mids)
-                            mids_stdev = mids_stdev * 10000
-                            if mids_stdev > NOD_STDEV:
-                                text = "NOD"
-                            elif (mids_stdev < SHOULDER_STDEV_UPPER_BOUND and mids_stdev > SHOULDER_STDEV_LOWER_BOUND):
-                                text = "SHOULDERS"
-                            else:
-                                text = ""
-
-                            gaze_texts = []
-                            headshake_texts = []
-                            faceexpr_texts = []
-                            emotion_texts = []
-                            head_shake_dir = []
-                            mids = []
-
-                            gaze_label = most_common_gaze
-                            expression_label = most_common_face_expr
-
-                            if text == "NOD":
-                                head_nod_text = "HEAD NOD"
-                            elif text == "SHOULDERS":
-                                shoulder_text = "SHOULDER MOVEMENT"
-
-                            if len(head_shake_text) == 0 and len(head_nod_text) == 0:
-                                most_common_head_move = ""
-                            elif len(head_shake_text) != 0 and len(head_nod_text) == 0:
-                                most_common_head_move = f"{head_shake_text}"
-                            elif len(head_shake_text) == 0 and len(head_nod_text) != 0:
-                                most_common_head_move = f"{head_nod_text}"
-                            else:
-                                most_common_head_move = f"{head_shake_text}, {head_nod_text}"
-
-                            if len(shoulder_text) == 0 and len(most_common_head_move) == 0:
-                                body_label = ""
-                            elif len(shoulder_text) == 0 and len(most_common_head_move) != 0:
-                                body_label = most_common_head_move
-                            elif len(shoulder_text) != 0 and len(most_common_head_move) == 0:
-                                body_label = shoulder_text
-                            else:
-                                body_label = f"{most_common_head_move}, {shoulder_text}"
-
-                            emotion_label = most_common_emotion
-                            if emotion_label == "null":
-                                emotion_label = ""
-
-                            gaze_entrylist.append((start, end, gaze_label))
-                            expr_entrylist.append((start, end, expression_label))
-                            body_entrylist.append((start, end, body_label))
-                            emotion_entrylist.append((start, end, emotion_label))
-
-                            # for saving the video with labels (expr, gaze, body)
-                            final_text = f"{gaze_label}, {expression_label}, {body_label}"
-                            # cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
-                            # cv2.imshow('Recording...', img)
-                            # out.write(img)
-
+                                gaze_entrylist.append((start, end, gaze_label))
+                                expr_entrylist.append((start, end, expression_label))
+                                body_entrylist.append((start, end, body_label))
+                                emotion_entrylist.append((start, end, emotion_label))
 
                     else:
                         label = ""
