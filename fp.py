@@ -9,6 +9,7 @@ from collections import Counter
 from praatio import textgrid
 import numpy as np
 import argparse
+import statistics
 import logging
 import cv2
 import sys
@@ -62,7 +63,7 @@ verbose = args.verbose
 gaze = args.gaze
 body = args.body
 expressions = args.expressions
-emotions = args.emotions
+# emotions = args.emotions
 
 debug = args.debug
 
@@ -113,7 +114,7 @@ model = inference.Model()
 
 IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
 
-BODY_MOVEMENT = config_object["HEAD_MOVEMENT"]
+BODY_MOVEMENT = config_object["BODY_MOVEMENT"]
 
 paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
@@ -145,7 +146,7 @@ headnod_rights = []
 headnod_lefts = []
 faceexpr_texts = []
 shoulder_texts = []
-emotion_texts = []
+# emotion_texts = []
 
 one_up_down = []
 both_up_down = []
@@ -168,7 +169,7 @@ while cap.isOpened():
     tg_gaze = textgrid.Textgrid()
     tg_expr = textgrid.Textgrid()
     tg_body = textgrid.Textgrid()
-    tg_emotion = textgrid.Textgrid()
+    # tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
         if verbose:
@@ -177,7 +178,7 @@ while cap.isOpened():
         gaze_entrylist = []
         expr_entrylist = []
         body_entrylist = []
-        emotion_entrylist = []
+        # emotion_entrylist = []
         tier = tg.tierDict[tier_name]
         entryList = tier.entryList
 
@@ -235,7 +236,9 @@ while cap.isOpened():
                                     head_shake_dir.append("")
 
                                 # HEAD  NOD or SHOULDER MOVEMENT
-                                mids.append(mediapipe_shoulders.get_body_movement(img))
+                                nod_sh = mediapipe_shoulders.get_body_movement(img)
+                                if nod_sh is not None:
+                                    mids.append(nod_sh)
 
                                 body_move = mediapipe_shoulders.get_body_movement(img)
                                 logging.info(f"Frame {frame_idx} body move {body_move}")
@@ -248,10 +251,10 @@ while cap.isOpened():
                                 if face_expr is not None:
                                     faceexpr_texts.append(face_expr)
 
-                            if emotions:
-                                # EMOTION
-                                emotion_label = model.fer(img)
-                                emotion_texts.append(emotion_label)
+                            # if emotions:
+                            #     # EMOTION
+                            #     emotion_label = model.fer(img)
+                            #     emotion_texts.append(emotion_label)
 
                             frame_idx += 1
 
@@ -262,12 +265,12 @@ while cap.isOpened():
 
                                 gaze_counter = Counter(gaze_texts)
                                 face_expr_counter = Counter(faceexpr_texts)
-                                emotion_counter = Counter(emotion_texts)
+                                # emotion_counter = Counter(emotion_texts)
 
-                                try:
-                                    most_common_emotion = emotion_counter.most_common(1)[0][0]
-                                except:
-                                    most_common_emotion = ""
+                                # try:
+                                #     most_common_emotion = emotion_counter.most_common(1)[0][0]
+                                # except:
+                                #     most_common_emotion = ""
 
                                 head_shake_dir_len = len(head_shake_dir)
 
@@ -287,8 +290,13 @@ while cap.isOpened():
                                     most_common_face_expr = ""
 
                                 # HEAD NOD or SHOULDER MOVEMENT
-                                mids_stdev = statistics.stdev(mids)
-                                mids_stdev = mids_stdev * 10000
+                                # print("######", mids)
+                                if len(mids) >= 2:
+                                    mids_stdev = statistics.stdev(mids)
+                                    mids_stdev = mids_stdev * 10000
+                                else:
+                                    mids_stdev = 0.0
+
                                 if mids_stdev > nod_std:
                                     text = "NOD"
                                 elif (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
@@ -299,7 +307,7 @@ while cap.isOpened():
                                 gaze_texts = []
                                 headshake_texts = []
                                 faceexpr_texts = []
-                                emotion_texts = []
+                                # emotion_texts = []
                                 head_shake_dir = []
                                 mids = []
 
@@ -329,14 +337,14 @@ while cap.isOpened():
                                 else:
                                     body_label = f"{most_common_head_move}, {shoulder_text}"
 
-                                emotion_label = most_common_emotion
-                                if emotion_label == "null":
-                                    emotion_label = ""
+                                # emotion_label = most_common_emotion
+                                # if emotion_label == "null":
+                                #     emotion_label = ""
 
                                 gaze_entrylist.append((start, end, gaze_label))
                                 expr_entrylist.append((start, end, expression_label))
                                 body_entrylist.append((start, end, body_label))
-                                emotion_entrylist.append((start, end, emotion_label))
+                                # emotion_entrylist.append((start, end, emotion_label))
 
                                 # for saving the video with labels (expr, gaze, body)
                                 final_text = f"{gaze_label}, {expression_label}, {body_label}"
@@ -348,19 +356,19 @@ while cap.isOpened():
                                 gaze_label = ','.join(gaze_texts)
                                 expression_label = ','.join(faceexpr_texts)
                                 body_label = ','.join(headmove_texts)
-                                emotion_label = ','.join(emotion_texts)
+                                # emotion_label = ','.join(emotion_texts)
 
                                 gaze_entrylist.append((start, end, gaze_label))
                                 expr_entrylist.append((start, end, expression_label))
                                 body_entrylist.append((start, end, body_label))
-                                emotion_entrylist.append((start, end, emotion_label))
+                                # emotion_entrylist.append((start, end, emotion_label))
 
                     else:
                         label = ""
                         gaze_entrylist.append((start, end, label))
                         expr_entrylist.append((start, end, label))
                         body_entrylist.append((start, end, label))
-                        emotion_entrylist.append((start, end, label))
+                        # emotion_entrylist.append((start, end, label))
 
             if verbose:
                 print(f"Done with {tier_name}.")
@@ -381,12 +389,12 @@ while cap.isOpened():
         print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
         print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
         print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-        print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+        # print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     logging.info(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
     logging.info(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
     logging.info(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-    logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+    # logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     cap.release()
     cv2.destroyAllWindows()

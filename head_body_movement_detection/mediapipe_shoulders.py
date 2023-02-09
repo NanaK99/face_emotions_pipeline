@@ -7,7 +7,7 @@ import logging
 import scipy
 
 
-font = cv2.FONT_HERSHEY_SIMPLEX
+# font = cv2.FONT_HERSHEY_SIMPLEX
 
 blue = (255, 127, 0)
 red = (50, 50, 255)
@@ -337,7 +337,7 @@ if __name__ == "__main__":
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
 
-cap.release()
-out.release()
-cv2.destroyAllWindows()
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 
