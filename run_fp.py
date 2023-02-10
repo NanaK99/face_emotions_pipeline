@@ -23,7 +23,7 @@ parser.add_argument('--output_dir_name', type=str,
 parser.add_argument('--verbose',
                     help='a boolean indicating the mode for logging, '
                          'in case of True, prints will also be visible in the terminal; '
-                         'otherwise the logs will be kept only in the log file', required=False, default=False, action='store_true')
+                         'otherwise the logs will be kept only in the log file', required=True)
 
 parser.add_argument('--debug',
                     help='', required=False, default=False, action='store_true')
@@ -36,12 +36,14 @@ if not os.path.exists(directory_path):
     os.makedirs(directory_path)
 
 
-base_command = ["python", "fp.py", "#type",  "--video", "#video", "--input_textgrid", "#input_textgrid", "--output_dir_name", "#output_dir_name"]
+base_command = ["python", "fp.py", "#type",  "--video", "#video", "--input_textgrid", "#input_textgrid", "--output_dir_name", "#output_dir_name", "--verbose", "#verbose"]
 
 if args.debug:
     base_command.append("--debug")
 
 types = ["--gaze", "--body", "--expressions", "--emotions" ]
+# types = ["--body"]
+
 
 #spawn processes
 processes = []
@@ -53,10 +55,10 @@ for t in types:
     new_command[new_command.index("#video")] = args.video
     new_command[new_command.index("#input_textgrid")] = temp_tex_grid
     new_command[new_command.index("#output_dir_name")] = args.output_dir_name
-    
-    if args.verbose:
-        new_command.append("--verbose")
+    new_command[new_command.index("#verbose")] = args.verbose
 
+    # if args.verbose:
+    #     new_command.append("--verbose")
     p = Popen(new_command)
     processes.append(p)
 

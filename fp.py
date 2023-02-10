@@ -7,7 +7,6 @@ from utils import textgrid_generation, merge_speakers, preprocess_tg, head_nod
 from configparser import ConfigParser
 from collections import Counter
 from praatio import textgrid
-import numpy as np
 import argparse
 import statistics
 import logging
@@ -121,9 +120,11 @@ paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
 final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
 
+merged_tg_path = "".join(list(merged_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
+final_tg_path = "".join(list(final_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
 verbose = ast.literal_eval(verbose)
-merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
-final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path, verbose)
+merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
+preprocess_tg.main(merged_tg_path, final_tg_path, verbose)
 tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
@@ -388,7 +389,9 @@ while cap.isOpened():
                                       output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
 
             # REMOVING UNNECESSARY FILES
-            os.remove(merged_textgrid_path)
+            os.remove(merged_tg_path)
+            os.remove(final_tg_path)
+            os.remove(input_textgrid_path)
 
             sys.exit()
             cap.release()
@@ -406,7 +409,9 @@ while cap.isOpened():
     logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     # REMOVING UNNECESSARY FILES
-    os.remove(merged_textgrid_path)
+    os.remove(merged_tg_path)
+    os.remove(final_tg_path)
+    os.remove(input_textgrid_path)
 
     cap.release()
     cv2.destroyAllWindows()
