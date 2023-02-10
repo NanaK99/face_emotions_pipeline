@@ -14,6 +14,7 @@ import logging
 import cv2
 import sys
 import os
+import ast
 
 
 class MyParser(argparse.ArgumentParser):
@@ -36,10 +37,10 @@ parser.add_argument('--input_textgrid', type=str,
                     help='path to the base textgrid', required=True)
 parser.add_argument('--output_dir_name', type=str,
                     help='name of the directory where the generated textgrid files should be saved', required=True)
-parser.add_argument('--verbose', type=bool,
+parser.add_argument('--verbose',
                     help='a boolean indicating the mode for logging, '
                          'in case of True, prints will also be visible in the terminal; '
-                         'otherwise the logs will be kept only in the log file', required=False, default=False)
+                         'otherwise the logs will be kept only in the log file', required=True)
 parser.add_argument('--gaze', default=False,
                     help='gaze only', required=False, action='store_true')
 parser.add_argument('--expressions', default=False,
@@ -63,7 +64,7 @@ verbose = args.verbose
 gaze = args.gaze
 body = args.body
 expressions = args.expressions
-# emotions = args.emotions
+emotions = args.emotions
 
 debug = args.debug
 
@@ -120,10 +121,7 @@ paths = config_object["PATHS"]
 merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
 final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
 
-merged_tg_path = "".join(list(merged_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
-final_tg_path = "".join(list(final_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
-
-
+verbose = ast.literal_eval(verbose)
 merged_textgrid_path = merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
 final_tg_path = preprocess_tg.main(merged_textgrid_path, final_tg_path, verbose)
 tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
@@ -146,7 +144,7 @@ headnod_rights = []
 headnod_lefts = []
 faceexpr_texts = []
 shoulder_texts = []
-# emotion_texts = []
+emotion_texts = []
 
 one_up_down = []
 both_up_down = []
@@ -169,7 +167,7 @@ while cap.isOpened():
     tg_gaze = textgrid.Textgrid()
     tg_expr = textgrid.Textgrid()
     tg_body = textgrid.Textgrid()
-    # tg_emotion = textgrid.Textgrid()
+    tg_emotion = textgrid.Textgrid()
 
     for tier_name in tier_name_list:
         if verbose:
@@ -178,7 +176,7 @@ while cap.isOpened():
         gaze_entrylist = []
         expr_entrylist = []
         body_entrylist = []
-        # emotion_entrylist = []
+        emotion_entrylist = []
         tier = tg.tierDict[tier_name]
         entryList = tier.entryList
 
@@ -255,6 +253,10 @@ while cap.isOpened():
                             #     # EMOTION
                             #     emotion_label = model.fer(img)
                             #     emotion_texts.append(emotion_label)
+                            if emotions:
+                                # EMOTION
+                                emotion_label = ""
+                                emotion_texts.append(emotion_label)
 
                             frame_idx += 1
 
@@ -265,12 +267,12 @@ while cap.isOpened():
 
                                 gaze_counter = Counter(gaze_texts)
                                 face_expr_counter = Counter(faceexpr_texts)
-                                # emotion_counter = Counter(emotion_texts)
+                                emotion_counter = Counter(emotion_texts)
 
-                                # try:
-                                #     most_common_emotion = emotion_counter.most_common(1)[0][0]
-                                # except:
-                                #     most_common_emotion = ""
+                                try:
+                                    most_common_emotion = emotion_counter.most_common(1)[0][0]
+                                except:
+                                    most_common_emotion = ""
 
                                 head_shake_dir_len = len(head_shake_dir)
 
@@ -297,6 +299,7 @@ while cap.isOpened():
                                 else:
                                     mids_stdev = 0.0
 
+                                # print(mids_stdev)
                                 if mids_stdev > nod_std:
                                     text = "NOD"
                                 elif (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
@@ -304,10 +307,12 @@ while cap.isOpened():
                                 else:
                                     text = ""
 
+                                # print("text",text)
+
                                 gaze_texts = []
                                 headshake_texts = []
                                 faceexpr_texts = []
-                                # emotion_texts = []
+                                emotion_texts = []
                                 head_shake_dir = []
                                 mids = []
 
@@ -337,14 +342,15 @@ while cap.isOpened():
                                 else:
                                     body_label = f"{most_common_head_move}, {shoulder_text}"
 
-                                # emotion_label = most_common_emotion
-                                # if emotion_label == "null":
-                                #     emotion_label = ""
+                                emotion_label = most_common_emotion
+                                if emotion_label == "null":
+                                    emotion_label = ""
 
                                 gaze_entrylist.append((start, end, gaze_label))
                                 expr_entrylist.append((start, end, expression_label))
                                 body_entrylist.append((start, end, body_label))
-                                # emotion_entrylist.append((start, end, emotion_label))
+                                emotion_entrylist.append((start, end, emotion_label))
+                                # emotion_entrylist.append((0.0, 0.0, ""))
 
                                 # for saving the video with labels (expr, gaze, body)
                                 final_text = f"{gaze_label}, {expression_label}, {body_label}"
@@ -356,30 +362,33 @@ while cap.isOpened():
                                 gaze_label = ','.join(gaze_texts)
                                 expression_label = ','.join(faceexpr_texts)
                                 body_label = ','.join(headmove_texts)
-                                # emotion_label = ','.join(emotion_texts)
+                                emotion_label = ','.join(emotion_texts)
 
                                 gaze_entrylist.append((start, end, gaze_label))
                                 expr_entrylist.append((start, end, expression_label))
                                 body_entrylist.append((start, end, body_label))
-                                # emotion_entrylist.append((start, end, emotion_label))
+                                emotion_entrylist.append((start, end, emotion_label))
 
                     else:
                         label = ""
                         gaze_entrylist.append((start, end, label))
                         expr_entrylist.append((start, end, label))
                         body_entrylist.append((start, end, label))
-                        # emotion_entrylist.append((start, end, label))
+                        emotion_entrylist.append((start, end, label))
 
             if verbose:
                 print(f"Done with {tier_name}.")
             logging.info(f"Done with {tier_name}.")
-            textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist,
-                                               output_dir_name, tg_gaze, tg_expr, tg_body, tier_name, type_of_run)
+            textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
+                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
 
         except KeyboardInterrupt:
             logging.exception("Keyboard Interrupt.")
-            textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist,
-                                      output_dir_name, tg_gaze, tg_expr, tg_body, tier_name,type_of_run)
+            textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
+                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
+
+            # REMOVING UNNECESSARY FILES
+            os.remove(merged_textgrid_path)
 
             sys.exit()
             cap.release()
@@ -389,12 +398,15 @@ while cap.isOpened():
         print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
         print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
         print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-        # print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+        print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
 
     logging.info(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
     logging.info(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
     logging.info(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-    # logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+    logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
+
+    # REMOVING UNNECESSARY FILES
+    os.remove(merged_textgrid_path)
 
     cap.release()
     cv2.destroyAllWindows()
