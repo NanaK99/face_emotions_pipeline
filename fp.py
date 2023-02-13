@@ -250,14 +250,14 @@ while cap.isOpened():
                                 if face_expr is not None:
                                     faceexpr_texts.append(face_expr)
 
+                            # EMOTION
+                            if emotions:
+                                emotion_label = model.fer(img)
+                                emotion_texts.append(emotion_label)
                             # if emotions:
                             #     # EMOTION
-                            #     emotion_label = model.fer(img)
+                            #     emotion_label = ""
                             #     emotion_texts.append(emotion_label)
-                            if emotions:
-                                # EMOTION
-                                emotion_label = ""
-                                emotion_texts.append(emotion_label)
 
                             frame_idx += 1
 
@@ -293,22 +293,18 @@ while cap.isOpened():
                                     most_common_face_expr = ""
 
                                 # HEAD NOD or SHOULDER MOVEMENT
-                                # print("######", mids)
                                 if len(mids) >= 2:
                                     mids_stdev = statistics.stdev(mids)
                                     mids_stdev = mids_stdev * 10000
                                 else:
                                     mids_stdev = 0.0
 
-                                # print(mids_stdev)
                                 if mids_stdev > nod_std:
                                     text = "NOD"
                                 elif (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
                                     text = "SHOULDERS"
                                 else:
                                     text = ""
-
-                                # print("text",text)
 
                                 gaze_texts = []
                                 headshake_texts = []
@@ -351,10 +347,9 @@ while cap.isOpened():
                                 expr_entrylist.append((start, end, expression_label))
                                 body_entrylist.append((start, end, body_label))
                                 emotion_entrylist.append((start, end, emotion_label))
-                                # emotion_entrylist.append((0.0, 0.0, ""))
 
                                 # for saving the video with labels (expr, gaze, body)
-                                final_text = f"{gaze_label}, {expression_label}, {body_label}"
+                                # final_text = f"{gaze_label}, {expression_label}, {body_label}"
                                 # cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
                                 # cv2.imshow('Recording...', img)
                                 # out.write(img)
@@ -362,7 +357,7 @@ while cap.isOpened():
                             else:
                                 gaze_label = ','.join(gaze_texts)
                                 expression_label = ','.join(faceexpr_texts)
-                                body_label = ','.join(headmove_texts)
+                                body_label = ','.join(str(mid) for mid in mids)
                                 emotion_label = ','.join(emotion_texts)
 
                                 gaze_entrylist.append((start, end, gaze_label))
