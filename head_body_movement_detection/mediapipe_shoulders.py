@@ -7,7 +7,7 @@ import logging
 import scipy
 
 
-# font = cv2.FONT_HERSHEY_SIMPLEX
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 blue = (255, 127, 0)
 red = (50, 50, 255)
@@ -69,6 +69,18 @@ def midpoint(x1, x2, y1, y2):
     return (x1 + x2) / 2, (y1 + y2) / 2
 
 
+def experiment(landmarks):
+    import numpy as np
+    from scipy.spatial.transform import Rotation
+
+    landmarks = np.array([[landmark.x, landmark.y, landmark.z] for landmark in results.pose_landmarks.landmark])
+    point1 = landmarks[0]
+    point2 = landmarks[10]
+    R = Rotation.from_matrix(np.dot(point2, np.linalg.inv(point1)))
+    quaternion = R.as_quat()
+    angle = 2 * np.arccos(quaternion[3])
+
+
 def get_body_movement(image):
         # Process the image and detect the holistic
         results = holistic.process(image)
@@ -81,6 +93,8 @@ def get_body_movement(image):
             return None
 
         landmarks = results.pose_landmarks.landmark
+
+        experiment(landmarks)
 
         left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
         right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
@@ -103,6 +117,94 @@ def get_body_movement(image):
         middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
 
         return middle_mouth_shoulder_dist
+
+
+# Define a function to compute the rotation matrix from the 3D points
+def compute_rotation_matrix(head_3d, neck_3d):
+    # Define a direction vector using the two 3D points
+    direction = head_3d - neck_3d
+
+    # Calculate the norm of the direction vector
+    norm = np.linalg.norm(direction)
+
+    # If the norm is zero, return the identity matrix
+    if norm == 0:
+        return np.identity(3)
+
+    # Normalize the direction vector
+    direction /= norm
+
+    # Define a reference vector along the x-axis
+    reference = np.array([1, 0, 0])
+
+    # Calculate the cross product of the reference vector and the direction vector
+    cross = np.cross(reference, direction)
+
+    # Calculate the dot product of the reference vector and the direction vector
+    dot = np.dot(reference, direction)
+
+    # Define the skew-symmetric cross product matrix
+    cross_matrix = np.array([[0, -cross[2], cross[1]],
+                             [cross[2], 0, -cross[0]],
+                             [-cross[1], cross[0], 0]])
+
+    # Calculate the rotation matrix
+    rotation = np.identity(3) + cross_matrix + np.dot(cross_matrix, cross_matrix) / (1 + dot)
+
+    return rotation
+
+
+# Define a function to get the Euler angles from the rotation matrix
+def get_euler_angles(rotation):
+    sy = np.sqrt(rotation[0, 0] * rotation[0, 0] + rotation[1, 0] * rotation[1, 0])
+    singular = sy < 1e-6
+
+    if not singular:
+        x = np.arctan2(rotation[2, 1], rotation[2, 2])
+        y = np.arctan2(-rotation[2, 0], sy)
+        z = np.arctan2(rotation[1, 0], rotation[0, 0])
+    else:
+        x = np.arctan2(-rotation[1, 2], rotation[1, 1])
+        y = np.arctan2(-rotation[2, 0], sy)
+        z = 0
+
+    return np.array([np.degrees(x), np.degrees(y), np.degrees(z)])
+
+
+import numpy as np
+
+head_points = np.array([
+    (0, 0, 0),              # nose tip
+    (0, -330, -65),         # chin
+    (-225, 170, -135),      # left corner of left eye
+    (225, 170, -135),       # right corner of right eye
+    (-150, -150, -125),     # left corner of mouth
+    (150, -150, -125)       # right corner of mouth
+], dtype=np.float32)
+
+# Define the indices of the points that make up each facial landmark
+LANDMARKS = {
+    "nose": 0,
+    "chin": 1,
+    "left_eye_left_corner": 2,
+    "right_eye_right_corner": 3,
+    "mouth_left_corner": 4,
+    "mouth_right_corner": 5,
+}
+
+
+# Define a function to compute the Euler angles from a set of facial landmarks
+def get_head_orientation(landmarks):
+    # Extract the 3D points of the facial landmarks
+    points_3d = np.array([landmarks[l] for l in LANDMARKS.keys()], dtype=np.float32)
+
+    # Compute the rotation matrix from the 3D points
+    rotation_matrix = compute_rotation_matrix(points_3d)
+
+    # Compute the Euler angles from the rotation matrix
+    euler_angles = get_euler_angles(rotation_matrix)
+
+    return euler_angles
 
 
 if __name__ == "__main__":
@@ -175,6 +277,39 @@ if __name__ == "__main__":
         if results.pose_landmarks is None:
             continue
         landmarks = results.pose_landmarks.landmark
+
+        # EULER
+        head_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
+        left_shoulder_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+        right_shoulder_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+
+        # Compute the neck landmark as the midpoint between the left and right shoulder landmarks
+        # neck_landmark = mp_pose.PoseLandmark(1)
+        neck_landmark_x = (left_shoulder_landmark.x + right_shoulder_landmark.x) / 2
+        neck_landmark_y = (left_shoulder_landmark.y + right_shoulder_landmark.y) / 2
+        neck_landmark_z = (left_shoulder_landmark.z + right_shoulder_landmark.z) / 2
+
+        # Extract the 3D coordinates of the head and neck landmarks
+        head_3d = np.array([head_landmark.x, head_landmark.y, head_landmark.z])
+        neck_3d = np.array([neck_landmark_x, neck_landmark_y, neck_landmark_z])
+        # print(head_3d.shape, neck_3d.shape)
+
+        # Compute the rotation matrix that transforms the head's local coordinate system to the camera's coordinate system
+        rotation_matrix = compute_rotation_matrix(head_3d, neck_3d)
+
+        # Extract the Euler angles from the rotation matrix
+        pitch, roll, yaw = get_euler_angles(rotation_matrix)
+        # print(pitch, roll, yaw)
+
+        # Determine if there was a nod based on the pitch angle
+        if pitch < -70:
+            text = "Nod detected"
+            print('Nod detected!')
+        else:
+            text = "No nod detected"
+            print('No nod detected.')
+
+        ###########################################################################################
 
         left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
         right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
@@ -281,15 +416,15 @@ if __name__ == "__main__":
             mids_stdev = statistics.stdev(mids)
             # print(mids)
             mids_stdev = mids_stdev*10000
-            print(mids_stdev)
             # print(mids_stdev)
-            if mids_stdev > 50:
-                print(f"{mids_stdev}: NOD")
+            # print(mids_stdev)
+            if mids_stdev > 150:
+                # print(f"{mids_stdev}: NOD")
                 text = "NOD"
                 # cv2.putText(frame, f"{mids_stdev :3f}; NOD", (150, 60), font, 1.5, blue, 2)
-            elif (mids_stdev < 50 and mids_stdev > 35):
+            elif (mids_stdev < 150 and mids_stdev > 70):
                 text = "SHOULDERS"
-                print(f"{mids_stdev}: SHOULDERS")
+                # print(f"{mids_stdev}: SHOULDERS")
                 # cv2.putText(frame, f"{mids_stdev :3f}; SHOULDERS", (150, 60), font, 1.5, blue, 2)
             # Get the resolution of the frames in the video stream
             # frame_width = int(cap.get(3))
@@ -326,7 +461,9 @@ if __name__ == "__main__":
         #     mp_pose.POSE_CONNECTIONS,
         #     landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
-        cv2.putText(frame, f"{mids_stdev :3f}; {text}", (150, 60), font, 1.5, blue, 2)
+        # cv2.putText(frame, f"{mids_stdev :3f}; {text}", (150, 60), font, 1.5, blue, 2)
+        cv2.putText(frame, f"Pitch: {pitch}, roll: {roll}, yaw: {yaw}...{text}", (150, 60), font, 1.5, blue, 2)
+
         mids_stdev = 0
         text = ""
 
