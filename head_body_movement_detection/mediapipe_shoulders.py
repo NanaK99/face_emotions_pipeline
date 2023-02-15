@@ -462,7 +462,7 @@ if __name__ == "__main__":
         #     landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
         # cv2.putText(frame, f"{mids_stdev :3f}; {text}", (150, 60), font, 1.5, blue, 2)
-        cv2.putText(frame, f"Pitch: {pitch}, roll: {roll}, yaw: {yaw}...{text}", (150, 60), font, 1.5, blue, 2)
+        cv2.putText(frame, f"Pitch: {pitch :3f}, roll: {roll :3f}, yaw: {yaw :3f}...{text}", (150, 60), font, 1, blue, 2)
 
         mids_stdev = 0
         text = ""
