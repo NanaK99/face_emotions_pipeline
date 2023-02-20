@@ -168,11 +168,13 @@ def get_shoulder_movement(image):
 
 
 def get_nod(image):
-    results = pose.process(frame)
+    results = pose.process(image)
 
     if results.pose_landmarks is None:
         return None
+
     landmarks = results.pose_landmarks.landmark
+
     # EULER
     head_landmark = landmarks[mp_pose.PoseLandmark.NOSE]
     left_shoulder_landmark = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
