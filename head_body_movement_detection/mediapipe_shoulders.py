@@ -17,6 +17,16 @@ light_green = (127, 233, 100)
 yellow = (0, 255, 255)
 pink = (255, 0, 255)
 
+# Define the indices of the points that make up each facial landmark
+LANDMARKS = {
+    "nose": 0,
+    "chin": 1,
+    "left_eye_left_corner": 2,
+    "right_eye_right_corner": 3,
+    "mouth_left_corner": 4,
+    "mouth_right_corner": 5,
+}
+
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 
@@ -67,56 +77,6 @@ def get_shoulder_visbility(right_shoulder, left_shoulder):
 
 def midpoint(x1, x2, y1, y2):
     return (x1 + x2) / 2, (y1 + y2) / 2
-
-
-def experiment(landmarks):
-    import numpy as np
-    from scipy.spatial.transform import Rotation
-
-    landmarks = np.array([[landmark.x, landmark.y, landmark.z] for landmark in results.pose_landmarks.landmark])
-    point1 = landmarks[0]
-    point2 = landmarks[10]
-    R = Rotation.from_matrix(np.dot(point2, np.linalg.inv(point1)))
-    quaternion = R.as_quat()
-    angle = 2 * np.arccos(quaternion[3])
-
-
-def get_body_movement(image):
-        # Process the image and detect the holistic
-        results = holistic.process(image)
-        # results = pose.process(image)
-        # Draw landmark annotation on the image.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-        if results.pose_landmarks is None:
-            return None
-
-        landmarks = results.pose_landmarks.landmark
-
-        experiment(landmarks)
-
-        left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
-        right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
-        mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
-        mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
-
-        ML_x = mouth_left.x
-        ML_y = mouth_left.y
-        MR_x = mouth_right.x
-        MR_y = mouth_right.y
-
-        l_shldr_x = left_shoulder.x
-        l_shldr_y = left_shoulder.y
-        r_shldr_x = right_shoulder.x
-        r_shldr_y = right_shoulder.y
-
-        mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
-        mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
-
-        middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
-
-        return middle_mouth_shoulder_dist
 
 
 # Define a function to compute the rotation matrix from the 3D points
@@ -171,40 +131,69 @@ def get_euler_angles(rotation):
     return np.array([np.degrees(x), np.degrees(y), np.degrees(z)])
 
 
-import numpy as np
+def get_shoulder_movement(image):
+        # Process the image and detect the holistic
+        results = holistic.process(image)
+        # results = pose.process(image)
+        # Draw landmark annotation on the image.
+        image.flags.writeable = True
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-head_points = np.array([
-    (0, 0, 0),              # nose tip
-    (0, -330, -65),         # chin
-    (-225, 170, -135),      # left corner of left eye
-    (225, 170, -135),       # right corner of right eye
-    (-150, -150, -125),     # left corner of mouth
-    (150, -150, -125)       # right corner of mouth
-], dtype=np.float32)
+        if results.pose_landmarks is None:
+            return None
 
-# Define the indices of the points that make up each facial landmark
-LANDMARKS = {
-    "nose": 0,
-    "chin": 1,
-    "left_eye_left_corner": 2,
-    "right_eye_right_corner": 3,
-    "mouth_left_corner": 4,
-    "mouth_right_corner": 5,
-}
+        landmarks = results.pose_landmarks.landmark
+
+        left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+        right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+        mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
+        mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
+
+        ML_x = mouth_left.x
+        ML_y = mouth_left.y
+        MR_x = mouth_right.x
+        MR_y = mouth_right.y
+
+        l_shldr_x = left_shoulder.x
+        l_shldr_y = left_shoulder.y
+        r_shldr_x = right_shoulder.x
+        r_shldr_y = right_shoulder.y
+
+        mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
+        mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
+
+        middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
+
+        return middle_mouth_shoulder_dist
 
 
-# Define a function to compute the Euler angles from a set of facial landmarks
-def get_head_orientation(landmarks):
-    # Extract the 3D points of the facial landmarks
-    points_3d = np.array([landmarks[l] for l in LANDMARKS.keys()], dtype=np.float32)
+def get_nod(image):
+    results = pose.process(frame)
 
-    # Compute the rotation matrix from the 3D points
-    rotation_matrix = compute_rotation_matrix(points_3d)
+    if results.pose_landmarks is None:
+        return None
+    landmarks = results.pose_landmarks.landmark
+    # EULER
+    head_landmark = landmarks[mp_pose.PoseLandmark.NOSE]
+    left_shoulder_landmark = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
+    right_shoulder_landmark = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
 
-    # Compute the Euler angles from the rotation matrix
-    euler_angles = get_euler_angles(rotation_matrix)
+    # Compute the neck landmark as the midpoint between the left and right shoulder landmarks
+    neck_landmark_x = (left_shoulder_landmark.x + right_shoulder_landmark.x) / 2
+    neck_landmark_y = (left_shoulder_landmark.y + right_shoulder_landmark.y) / 2
+    neck_landmark_z = (left_shoulder_landmark.z + right_shoulder_landmark.z) / 2
 
-    return euler_angles
+    # Extract the 3D coordinates of the head and neck landmarks
+    head_3d = np.array([head_landmark.x, head_landmark.y, head_landmark.z])
+    neck_3d = np.array([neck_landmark_x, neck_landmark_y, neck_landmark_z])
+
+    # Compute the rotation matrix that transforms the head's local coordinate system to the camera's coordinate system
+    rotation_matrix = compute_rotation_matrix(head_3d, neck_3d)
+
+    # Extract the Euler angles from the rotation matrix
+    pitch, roll, yaw = get_euler_angles(rotation_matrix)
+
+    return pitch
 
 
 if __name__ == "__main__":

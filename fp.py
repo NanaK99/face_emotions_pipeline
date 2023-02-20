@@ -138,26 +138,21 @@ for expr in IGNORE_EXPRS:
 nod_std = float(BODY_MOVEMENT["NOD_STDEV"])
 sh_std_upper_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_UPPER_BOUND"])
 sh_std_lower_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_LOWER_BOUND"])
+NOD_MEAN = float(BODY_MOVEMENT["NOD_MEAN"])
+
 
 gaze_texts = []
-headshake_texts = []
-headnod_rights = []
-headnod_lefts = []
+head_nods = []
 faceexpr_texts = []
-shoulder_texts = []
 emotion_texts = []
-
-one_up_down = []
-both_up_down = []
-lean_in_out = []
+# lean_in_out = []
 head_shake_dir = []
-head_nod_dir = []
 mids = []
 
 shoulder_text = ""
 head_nod_text = ""
 
-new_tier_name_list = []
+# new_tier_name_list = []
 
 tier_name_list = tg.tierNameList
 
@@ -234,13 +229,16 @@ while cap.isOpened():
                                 else:
                                     head_shake_dir.append("")
 
-                                # HEAD  NOD or SHOULDER MOVEMENT
-                                nod_sh = mediapipe_shoulders.get_body_movement(img)
-                                if nod_sh is not None:
-                                    mids.append(nod_sh)
+                                # HEAD  NOD and SHOULDER MOVEMENT
+                                mouth_sh_dist = mediapipe_shoulders.get_shoulder_movement(img)
+                                if mouth_sh_dist is not None:
+                                    mids.append(mouth_sh_dist)
 
-                                body_move = mediapipe_shoulders.get_body_movement(img)
-                                logging.info(f"Frame {frame_idx} body move {body_move}")
+                                pitch = mediapipe_shoulders.get_nod(img)
+                                if pitch is not None:
+                                    head_nods.append(pitch)
+
+                                logging.info(f"Frame {frame_idx} body move {mouth_sh_dist}")
 
                             if expressions:
                                 # FACE EXPRESSION
@@ -299,15 +297,25 @@ while cap.isOpened():
                                 else:
                                     mids_stdev = 0.0
 
-                                if mids_stdev > nod_std:
-                                    text = "NOD"
-                                elif (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
-                                    text = "SHOULDERS"
+                                # todo remove the nod part, leave only the shoulders detection
+                                # if mids_stdev > nod_std:
+                                #     text = "NOD"
+                                if (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
+                                    shoulder_text = "SHOULDERS"
                                 else:
-                                    text = ""
+                                    shoulder_text = ""
 
+                                # HEAD NOD
+                                from statistics import mean
+                                nod_mean = mean(head_nods)
+
+                                if nod_mean < NOD_MEAN:
+                                    nod_text = "HEAD NOD"
+                                else:
+                                    nod_text = ""
+
+                                head_nods = []
                                 gaze_texts = []
-                                headshake_texts = []
                                 faceexpr_texts = []
                                 emotion_texts = []
                                 head_shake_dir = []
@@ -316,28 +324,25 @@ while cap.isOpened():
                                 gaze_label = most_common_gaze
                                 expression_label = most_common_face_expr
 
-                                if text == "NOD":
-                                    head_nod_text = "HEAD NOD"
-                                elif text == "SHOULDERS":
-                                    shoulder_text = "SHOULDER MOVEMENT"
+                                # if text == "NOD":
+                                #     head_nod_text = "HEAD NOD"
+                                # elif text == "SHOULDERS":
+                                shoulder_text = "SHOULDER MOVEMENT"
 
-                                if len(head_shake_text) == 0 and len(head_nod_text) == 0:
-                                    most_common_head_move = ""
-                                elif len(head_shake_text) != 0 and len(head_nod_text) == 0:
-                                    most_common_head_move = f"{head_shake_text}"
-                                elif len(head_shake_text) == 0 and len(head_nod_text) != 0:
-                                    most_common_head_move = f"{head_nod_text}"
+                                if len(head_nod_text) > 0:
+                                    most_common_head_move = head_nod_text
                                 else:
-                                    most_common_head_move = f"{head_shake_text}, {head_nod_text}"
+                                    most_common_head_move = head_shake_text
 
-                                if len(shoulder_text) == 0 and len(most_common_head_move) == 0:
-                                    body_label = ""
-                                elif len(shoulder_text) == 0 and len(most_common_head_move) != 0:
+                                if most_common_head_move == "HEAD NOD":
                                     body_label = most_common_head_move
-                                elif len(shoulder_text) != 0 and len(most_common_head_move) == 0:
-                                    body_label = shoulder_text
+                                elif most_common_head_move == "HEAD SHAKE":
+                                    if len(shoulder_text) > 0:
+                                        body_label = shoulder_text
+                                    else:
+                                        body_label = most_common_head_move
                                 else:
-                                    body_label = f"{most_common_head_move}, {shoulder_text}"
+                                    body_label = shoulder_text
 
                                 emotion_label = most_common_emotion
                                 if emotion_label == "null":
