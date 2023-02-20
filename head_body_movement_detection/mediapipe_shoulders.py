@@ -4,6 +4,7 @@ import math as m
 import argparse
 import cv2
 import logging
+import numpy as np
 import scipy
 
 
@@ -78,6 +79,16 @@ def get_shoulder_visbility(right_shoulder, left_shoulder):
 def midpoint(x1, x2, y1, y2):
     return (x1 + x2) / 2, (y1 + y2) / 2
 
+def get_landmarks(image):
+    results = pose.process(image)
+
+    if results.pose_landmarks is None:
+        return None
+
+    landmarks = results.pose_landmarks.landmark
+
+    return landmarks
+
 
 # Define a function to compute the rotation matrix from the 3D points
 def compute_rotation_matrix(head_3d, neck_3d):
@@ -130,50 +141,79 @@ def get_euler_angles(rotation):
 
     return np.array([np.degrees(x), np.degrees(y), np.degrees(z)])
 
+# for runing this file as main
+# def get_shoulder_movement(image):
+#         # Process the image and detect the holistic
+#         results = holistic.process(image)
+#         # results = pose.process(image)
+#         # Draw landmark annotation on the image.
+#         image.flags.writeable = True
+#         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+#
+#         if results.pose_landmarks is None:
+#             return None
+#
+#         landmarks = results.pose_landmarks.landmark
+#
+#         left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+#         right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+#         mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
+#         mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
+#
+#         ML_x = mouth_left.x
+#         ML_y = mouth_left.y
+#         MR_x = mouth_right.x
+#         MR_y = mouth_right.y
+#
+#         l_shldr_x = left_shoulder.x
+#         l_shldr_y = left_shoulder.y
+#         r_shldr_x = right_shoulder.x
+#         r_shldr_y = right_shoulder.y
+#
+#         mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
+#         mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
+#
+#         middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
+#
+#         return middle_mouth_shoulder_dist
 
-def get_shoulder_movement(image):
-        # Process the image and detect the holistic
-        results = holistic.process(image)
-        # results = pose.process(image)
-        # Draw landmark annotation on the image.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+def get_shoulder_movement(landmarks):
+    # # Process the image and detect the holistic
+    # results = holistic.process(image)
+    # # results = pose.process(image)
+    # # Draw landmark annotation on the image.
+    # image.flags.writeable = True
+    # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    #
+    # if results.pose_landmarks is None:
+    #     return None
+    #
+    # landmarks = results.pose_landmarks.landmark
 
-        if results.pose_landmarks is None:
-            return None
+    left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+    right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+    mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
+    mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
 
-        landmarks = results.pose_landmarks.landmark
+    ML_x = mouth_left.x
+    ML_y = mouth_left.y
+    MR_x = mouth_right.x
+    MR_y = mouth_right.y
 
-        left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
-        right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
-        mouth_left = landmarks[mp_holistic.PoseLandmark.MOUTH_LEFT.value]
-        mouth_right = landmarks[mp_holistic.PoseLandmark.MOUTH_RIGHT.value]
+    l_shldr_x = left_shoulder.x
+    l_shldr_y = left_shoulder.y
+    r_shldr_x = right_shoulder.x
+    r_shldr_y = right_shoulder.y
 
-        ML_x = mouth_left.x
-        ML_y = mouth_left.y
-        MR_x = mouth_right.x
-        MR_y = mouth_right.y
+    mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
+    mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
 
-        l_shldr_x = left_shoulder.x
-        l_shldr_y = left_shoulder.y
-        r_shldr_x = right_shoulder.x
-        r_shldr_y = right_shoulder.y
+    middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
 
-        mid_mouth_x, mid_mouth_y = midpoint(ML_x, MR_x, ML_y, MR_y)
-        mid_should_x, mid_should_y = midpoint(l_shldr_x, r_shldr_x, l_shldr_y, r_shldr_y)
-
-        middle_mouth_shoulder_dist = findDistance(mid_mouth_x, mid_mouth_y, mid_should_x, mid_should_y)
-
-        return middle_mouth_shoulder_dist
+    return middle_mouth_shoulder_dist
 
 
-def get_nod(image):
-    results = pose.process(image)
-
-    if results.pose_landmarks is None:
-        return None
-
-    landmarks = results.pose_landmarks.landmark
+def get_shake_nod(landmarks):
 
     # EULER
     head_landmark = landmarks[mp_pose.PoseLandmark.NOSE]
@@ -195,7 +235,38 @@ def get_nod(image):
     # Extract the Euler angles from the rotation matrix
     pitch, roll, yaw = get_euler_angles(rotation_matrix)
 
-    return pitch
+    return pitch, roll, yaw
+
+# for runing this file as main
+# def get_shake_nod(image):
+#     results = pose.process(image)
+#
+#     if results.pose_landmarks is None:
+#         return None
+#
+#     landmarks = results.pose_landmarks.landmark
+#
+#     # EULER
+#     head_landmark = landmarks[mp_pose.PoseLandmark.NOSE]
+#     left_shoulder_landmark = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
+#     right_shoulder_landmark = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+#
+#     # Compute the neck landmark as the midpoint between the left and right shoulder landmarks
+#     neck_landmark_x = (left_shoulder_landmark.x + right_shoulder_landmark.x) / 2
+#     neck_landmark_y = (left_shoulder_landmark.y + right_shoulder_landmark.y) / 2
+#     neck_landmark_z = (left_shoulder_landmark.z + right_shoulder_landmark.z) / 2
+#
+#     # Extract the 3D coordinates of the head and neck landmarks
+#     head_3d = np.array([head_landmark.x, head_landmark.y, head_landmark.z])
+#     neck_3d = np.array([neck_landmark_x, neck_landmark_y, neck_landmark_z])
+#
+#     # Compute the rotation matrix that transforms the head's local coordinate system to the camera's coordinate system
+#     rotation_matrix = compute_rotation_matrix(head_3d, neck_3d)
+#
+#     # Extract the Euler angles from the rotation matrix
+#     pitch, roll, yaw = get_euler_angles(rotation_matrix)
+#
+#     return pitch, roll, yaw
 
 
 if __name__ == "__main__":
@@ -225,6 +296,7 @@ if __name__ == "__main__":
     sh_r = []
     mo_l = []
     mo_r = []
+    yaws = []
     stdevs_dist = []
     stdevs_shl = []
     stdevs_shr = []
@@ -274,31 +346,50 @@ if __name__ == "__main__":
         left_shoulder_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         right_shoulder_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
 
+        # left_ear_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_EAR]
+        # right_ear_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_EAR]
+
         # Compute the neck landmark as the midpoint between the left and right shoulder landmarks
         # neck_landmark = mp_pose.PoseLandmark(1)
         neck_landmark_x = (left_shoulder_landmark.x + right_shoulder_landmark.x) / 2
         neck_landmark_y = (left_shoulder_landmark.y + right_shoulder_landmark.y) / 2
         neck_landmark_z = (left_shoulder_landmark.z + right_shoulder_landmark.z) / 2
 
+        # ears_landmark_x = (left_ear_landmark.x + right_ear_landmark.x) / 2
+        # ears_landmark_y = (left_ear_landmark.y + right_ear_landmark.y) / 2
+        # ears_landmark_z = (left_ear_landmark.z + right_ear_landmark.z) / 2
+
         # Extract the 3D coordinates of the head and neck landmarks
         head_3d = np.array([head_landmark.x, head_landmark.y, head_landmark.z])
         neck_3d = np.array([neck_landmark_x, neck_landmark_y, neck_landmark_z])
+        # ears_3d = np.array([neck_landmark_x, neck_landmark_y, neck_landmark_z])
         # print(head_3d.shape, neck_3d.shape)
 
         # Compute the rotation matrix that transforms the head's local coordinate system to the camera's coordinate system
         rotation_matrix = compute_rotation_matrix(head_3d, neck_3d)
+        # rotation_matrix_shake = compute_rotation_matrix(head_3d, ears_3d)
 
         # Extract the Euler angles from the rotation matrix
         pitch, roll, yaw = get_euler_angles(rotation_matrix)
+        yaws.append(yaw)
         # print(pitch, roll, yaw)
+        # pitch_shake, roll_shake, yaw_shake = get_euler_angles(rotation_matrix_shake)
+        # print(pitch_shake, roll_shake, yaw_shake)
 
         # Determine if there was a nod based on the pitch angle
-        if pitch < -70:
-            text = "Nod detected"
-            print('Nod detected!')
-        else:
-            text = "No nod detected"
-            print('No nod detected.')
+        # if pitch < -70:
+        #     text = "Nod detected"
+        #     # print('Nod detected!')
+        # else:
+        #     text = "No nod detected"
+            # print('No nod detected.')
+
+        # if yaw_shake < -90:
+        #     text = "shake detected"
+        #     print(text)
+        # else:
+        #     text = "No shake detected"
+        #     print(text)
 
         ###########################################################################################
 
@@ -320,7 +411,6 @@ if __name__ == "__main__":
         #     print("####",body_mov[2])
         # cv2.putText(frame, f"{body_mov[0], body_mov[1]}", (200, 30),
         #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        import numpy as np
 
         # left_sh = np.array([left_shoulder.x, left_shoulder.y, left_shoulder.z])
         # right_sh = np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z])
@@ -404,17 +494,30 @@ if __name__ == "__main__":
             # print()
             # cv2.putText(frame, f"right sh {r_shldr_x:.2f}, {r_shldr_y:.2f}", font, 0.9, blue, 2)
 
+            yaws_stdev = statistics.stdev(yaws)
+            # print(mids)
+            yaws_stdev = yaws_stdev*10000
+            # print(mids_stdev)
+            # print(mids_stdev)
+            if yaws_stdev > 3000:
+                # print(f"{mids_stdev}: NOD")
+                text = "SHAKE"
+
+            print(text)
+            print(yaws_stdev)
+
+
             mids_stdev = statistics.stdev(mids)
             # print(mids)
             mids_stdev = mids_stdev*10000
             # print(mids_stdev)
             # print(mids_stdev)
-            if mids_stdev > 150:
+            # if mids_stdev > 150:
                 # print(f"{mids_stdev}: NOD")
-                text = "NOD"
+                # text = "NOD"
                 # cv2.putText(frame, f"{mids_stdev :3f}; NOD", (150, 60), font, 1.5, blue, 2)
-            elif (mids_stdev < 150 and mids_stdev > 70):
-                text = "SHOULDERS"
+            # elif (mids_stdev < 150 and mids_stdev > 70):
+            #     text = "SHOULDERS"
                 # print(f"{mids_stdev}: SHOULDERS")
                 # cv2.putText(frame, f"{mids_stdev :3f}; SHOULDERS", (150, 60), font, 1.5, blue, 2)
             # Get the resolution of the frames in the video stream
@@ -442,6 +545,8 @@ if __name__ == "__main__":
             # left_stds = []
             # right_stds = []
             mids = []
+            yaws = []
+            cv2.putText(frame, f"yaw stdev: {yaws_stdev :3f}...{text}", (150, 60), font, 1, blue, 2)
 
 
 
@@ -453,7 +558,8 @@ if __name__ == "__main__":
         #     landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
         # cv2.putText(frame, f"{mids_stdev :3f}; {text}", (150, 60), font, 1.5, blue, 2)
-        cv2.putText(frame, f"Pitch: {pitch :3f}, roll: {roll :3f}, yaw: {yaw :3f}...{text}", (150, 60), font, 1, blue, 2)
+        # cv2.putText(frame, f"Pitch: {pitch :3f}, roll: {roll :3f}, yaw: {yaw :3f}...{text}", (150, 60), font, 1, blue, 2)
+        # cv2.putText(frame, f"yaw stdev: {yaws_stdev :3f}...{text}", (150, 60), font, 1, blue, 2)
 
         mids_stdev = 0
         text = ""
