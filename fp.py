@@ -147,7 +147,12 @@ while cap.isOpened():
     if gaze:
         gaze_all = gaze_estimator.get_gaze_direction(img, )
         if gaze_all is not None:
+            p1_left = gaze_all[0]
+            p1_right = gaze_all[1]
+            p2 = gaze_all[2]
             g_text = gaze_all[3]
+            cv2.line(img, p1_left, p2, (0, 0, 255), 2)
+            cv2.line(img, p1_right, p2, (0, 0, 255), 2)
         else:
             g_text = ""
         if verbose:
@@ -247,7 +252,7 @@ while cap.isOpened():
             head_shake_stdev = head_shake_stdev * 10000
         else:
             head_shake_stdev = 0.0
-
+        # print(head_shake_stdev, HEAD_SHAKE_STDEV)
         if head_shake_stdev >= HEAD_SHAKE_STDEV:
             shake_text = "HEAD SHAKE"
         else:
@@ -255,11 +260,11 @@ while cap.isOpened():
 
         # HEAD NOD
         if len(head_nods) >= 2:
-            nod_mean = mean(head_nods)
+            nod_min = min(head_nods)
         else:
-            nod_mean = 0.0
-        print(nod_mean, NOD_MEAN)
-        if nod_mean < NOD_MEAN:
+            nod_min = 0.0
+        # print(nod_max, NOD_MEAN)
+        if nod_min < NOD_MEAN:
             nod_text = "HEAD NOD"
         else:
             nod_text = ""
@@ -299,10 +304,14 @@ while cap.isOpened():
         head_shakes = []
         mids = []
 
-    cv2.putText(img, f"GAZE: {gaze_label}", (20, 70), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
-    cv2.putText(img, f"EXPRESSION: {expression_label}", (20, 100), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
-    cv2.putText(img, f"BODY: {body_label}", (20, 130), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
-    cv2.putText(img, f"EMOTION: {emotion_label}", (20, 160), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
+    if body:
+        cv2.putText(img, f"BODY: {body_label}", (20, 130), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA, False)
+    if gaze:
+        cv2.putText(img, f"GAZE: {gaze_label}", (20, 70), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA, False)
+    if expressions:
+        cv2.putText(img, f"EXPRESSION: {expression_label}", (20, 100), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA, False)
+    if emotions:
+        cv2.putText(img, f"EMOTION: {emotion_label}", (20, 160), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA, False)
 
         # for saving the video with labels (expr, gaze, body)
 

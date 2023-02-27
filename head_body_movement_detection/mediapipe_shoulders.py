@@ -1,4 +1,4 @@
-from scipy.spatial import distance as dist
+# from scipy.spatial import distance as dist
 import mediapipe as mp
 import math as m
 import argparse
@@ -377,12 +377,13 @@ if __name__ == "__main__":
         # print(pitch_shake, roll_shake, yaw_shake)
 
         # Determine if there was a nod based on the pitch angle
-        # if pitch < -70:
-        #     text = "Nod detected"
-        #     # print('Nod detected!')
-        # else:
-        #     text = "No nod detected"
-            # print('No nod detected.')
+        print(pitch)
+        if pitch < -70:
+            text = "Nod detected"
+            # print('Nod detected!')
+        else:
+            text = "No nod detected"
+            print('No nod detected.')
 
         # if yaw_shake < -90:
         #     text = "shake detected"
@@ -503,8 +504,8 @@ if __name__ == "__main__":
                 # print(f"{mids_stdev}: NOD")
                 text = "SHAKE"
 
-            print(text)
-            print(yaws_stdev)
+            # print(text)
+            # print(yaws_stdev)
 
 
             mids_stdev = statistics.stdev(mids)

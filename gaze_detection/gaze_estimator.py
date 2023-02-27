@@ -1,6 +1,6 @@
 import mediapipe as mp
 import cv2
-import gaze_detection.gaze as gaze
+from gaze_detection import gaze
 import argparse
 
 
@@ -28,16 +28,16 @@ def get_gaze_direction(image):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--start', metavar='N', type=int,
-                        help='an integer for the accumulator')
-    parser.add_argument('--video', metavar='N', type=str,
-                        help='an integer for the accumulator')
+    # parser.add_argument('--start', metavar='N', type=int,
+    #                     help='an integer for the accumulator')
+    # parser.add_argument('--video', metavar='N', type=str,
+    #                     help='an integer for the accumulator')
     parser.add_argument('--anot', choices=('True', 'False'))
 
     args = parser.parse_args()
-    start = args.start
-    cap = cv2.VideoCapture(args.video)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, start)
+    # start = args.start
+    cap = cv2.VideoCapture(0)
+    # cap.set(cv2.CAP_PROP_POS_FRAMES, start)
     # Check if camera opened successfully
     if cap.isOpened() == False:
         print("Error opening video file")

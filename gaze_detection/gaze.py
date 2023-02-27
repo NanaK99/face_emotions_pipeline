@@ -153,6 +153,7 @@ def gaze(frame, points):
 
         ### FOR Trott_Garner_Miranda_LG_2022_-_Audio2_new video
         try:
+            print(gaze[0], gaze[1])
             if gaze[0] > centre_lower_limit and gaze[0] < centre_upper_limit:
                 if gaze[1] < up:
                     text = "UP CENTRE"
