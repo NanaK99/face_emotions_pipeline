@@ -6,11 +6,11 @@ git clone https://github.com/MagicalLabs/face_emotions_pipeline.git
 ```
 mkdir checkpoints
 ```
-3. Download the below pre-trained model weights to the *checkpoints* directory.
+3. Download the desired pre-trained model weights to the *checkpoints* directory. **It is recommended to use the weights of affectnet8.**
 
 |     task     	| link 	|
 |:-----------:	|:------:	|
-| AffectNet-8 	|[download](https://drive.google.com/drive/u/0/folders/1HZlkkrgCiZXQqgj8XvsI3DK3kyorcKSp)      	|
+| AffectNet-8 	|[download](https://drive.google.com/drive/folders/1K9zCWL9pBgNfAaQ26dAETcEBijMgyf8W?usp=share_link)      	|
 
 4. In the directory *static*, modify the file *config.ini* as you wish.
 
@@ -20,14 +20,12 @@ pip3 install -r requirements.txt
 ```
 6. Run: 
 ```
-python run_fp.py --video video.mp4 --input_textgrid input.TextGrid --output_dir_name outputs --verbose False
+python fp.py
 ```
-, where the first argument is the path to the video file, 
-the second argument is the path to the input textgrid (which will be used to generate the output textgrids), and 
-the third argument is a name of an output folder, where you wish to save the generated textgrids.
+This command has five optional arguments: --gaze, --body, --emotion, --expression, and --verbose. These arguments are set to False by default and to True if mentioned in the command line when executing the *python fp.py* command.
 
-The latter command will read frames from the video path and output four different TextGrid files: 
-- a file corresponding to the detected eye gaze movement, such as: "up left", "down right", "centre", etc,
-- a file corresponding to the detected head or body movement, such as: "head shake", "head nod", "lean in or out",
-- a file corresponding to the detected face expressions: such as, "Smiling", "Widened eyes", "Narrowed eyes", "Furrowed brows", "Tense" or "Raised Brows".
-- a file corresponding to the detected emotion: such as, "happy", "sad", "anger", "fear", etc.
+The latter command will read frames from the webcam and print the output texts corresponding to the arguments mentioned in the command line:
+- GAZE: the detected eye gaze movement, such as: "up left", "down right", "centre", etc,
+- BODY: the detected head or body movement, such as: "head shake", "head nod", "shoulder movement",
+- EXPRESSION: the detected face expressions: such as, "Smiling", "Widened eyes", "Narrowed eyes", "Furrowed brows", "Tense" or "Raised Brows".
+- EMOTION: the detected emotion: such as, "happy", "sad", "anger", "fear", etc.

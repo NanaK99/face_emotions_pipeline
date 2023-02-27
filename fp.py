@@ -2,11 +2,9 @@ from head_body_movement_detection import mediapipe_face, mediapipe_shoulders
 from face_expr_detection import face_visible_expressions
 from gaze_detection import gaze_estimator
 from emotion_detection import inference
-from utils import textgrid_generation, merge_speakers, preprocess_tg, head_nod
 
 from configparser import ConfigParser
 from collections import Counter
-from praatio import textgrid
 import argparse
 import statistics
 from statistics import mean
@@ -14,7 +12,6 @@ import logging
 import cv2
 import sys
 import os
-import ast
 
 
 class MyParser(argparse.ArgumentParser):
@@ -31,48 +28,69 @@ paths = config_object["PATHS"]
 
 parser = MyParser()
 
-parser.add_argument('--video', type=str,
-                    help='path to the input video', required=True)
-parser.add_argument('--input_textgrid', type=str,
-                    help='path to the base textgrid', required=True)
-parser.add_argument('--output_dir_name', type=str,
-                    help='name of the directory where the generated textgrid files should be saved', required=True)
 parser.add_argument('--verbose',
                     help='a boolean indicating the mode for logging, '
                          'in case of True, prints will also be visible in the terminal; '
-                         'otherwise the logs will be kept only in the log file', required=True)
-parser.add_argument('--gaze', default=False,
-                    help='gaze only', required=False, action='store_true')
-parser.add_argument('--expressions', default=False,
-                    help='expressions only', required=False, action='store_true')
-parser.add_argument('--body', default=False,
-                    help='body only', required=False, action='store_true')
-parser.add_argument('--emotions', default=False,
-                    help='emotions only', required=False, action='store_true')
+                         'otherwise the logs will be kept only in the log file',
+                    required=False,
+                    action='store_true')
 
+parser.add_argument('--gaze',
+                    help='gaze only',
+                    required=False,
+                    action='store_true')
 
-parser.add_argument('--debug', default=False,
-                    help='emotions only', required=False, action='store_true')
+parser.add_argument('--expressions',
+                    help='expressions only',
+                    required=False,
+                    action='store_true')
+
+parser.add_argument('--body',
+                    help='body only',
+                    required=False,
+                    action='store_true')
+
+parser.add_argument('--emotions',
+                    help='emotions only',
+                    required=False,
+                    action='store_true')
+
 
 args = parser.parse_args()
 
-video_path = args.video
-input_textgrid_path = args.input_textgrid
-output_dir_name = args.output_dir_name
-verbose = args.verbose
-gaze = args.gaze
-body = args.body
-expressions = args.expressions
-emotions = args.emotions
-debug = args.debug
+if args.verbose:
+    verbose = True
+else:
+    verbose = False
 
-type_of_run = sys.argv[1].strip("--")
+if args.gaze:
+    gaze = True
+else:
+    gaze = False
+
+if args.body:
+    body = True
+else:
+    body = False
+
+if args.expressions:
+    expressions = True
+else:
+    expressions = False
+
+if args.emotions:
+    emotions = True
+else:
+    emotions = False
+
+# type_of_run = sys.argv[1].strip("--")
 log_folder_path = paths["LOG_FOLDER_PATH"]
 
 if not os.path.exists(log_folder_path):
     os.makedirs(log_folder_path, exist_ok=True)
 
-log_file_path = os.path.join(log_folder_path, type_of_run+".txt")
+# log_file_path = os.path.join(log_folder_path, type_of_run+".txt")
+log_file_path = os.path.join(log_folder_path, "log_file.txt")
 log_file_exists = os.path.exists(log_file_path)
 if log_file_exists:
     os.remove(log_file_path)
@@ -82,60 +100,19 @@ logging.basicConfig(filename=log_file_path, level=logging.INFO,  format="%(ascti
 VID_EXTENSIONS = ["mp4"]
 TEXTGRID_EXTENSIONS = ["TextGrid"]
 
-error_path = ""
-
-vid_exist = os.path.exists(video_path)
-textgrid_path_exist = os.path.exists(input_textgrid_path)
-
-if (not vid_exist):
-    error_path = video_path
-if (not textgrid_path_exist):
-    error_path = input_textgrid_path
-
-if len(error_path) != 0:
-    sys.stderr.write(f"{error_path} does not exist!")
-    sys.exit(2)
-
-if video_path.split(".")[-1] not in VID_EXTENSIONS:
-    sys.stderr.write(f"{video_path} is not in the correct format!")
-    sys.exit(2)
-
-if input_textgrid_path.split(".")[-1] not in TEXTGRID_EXTENSIONS:
-    sys.stderr.write(f"{input_textgrid_path} is not in the correct format!")
-    sys.exit(2)
-
-directory_path = os.path.join("./", output_dir_name)
-if not os.path.exists(directory_path):
-    os.makedirs(directory_path)
-
-cap = cv2.VideoCapture(video_path)
+cap = cv2.VideoCapture(0)
 
 fps = cap.get(cv2.CAP_PROP_FPS)  # 25
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 model = inference.Model()
 
-IGNORE_EXPRS = config_object["IGNORE_EXPRS"]
-
 BODY_MOVEMENT = config_object["BODY_MOVEMENT"]
 
-paths = config_object["PATHS"]
-merged_tg_path = paths["MERGED_TEXTGRID_PATH"]
-final_tg_path = paths["PREPROCESSED_TEXTGRID_PATH"]
-
-merged_tg_path = "".join(list(merged_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
-final_tg_path = "".join(list(final_tg_path.split(".TextGrid"))+[type_of_run, ".TextGrid"])
-verbose = ast.literal_eval(verbose)
-merge_speakers.main(input_textgrid_path, merged_tg_path, verbose)
-preprocess_tg.main(merged_tg_path, final_tg_path, verbose)
-tg = textgrid.openTextgrid(final_tg_path, includeEmptyIntervals=True)
+# verbose = ast.literal_eval(verbose)
 
 video_parameters = config_object["VIDEO_PARAMETERS"]
 min_num_of_frames = int(video_parameters["MIN_NUM_OF_FRAMES"])
-
-ignore_exprs = []
-for expr in IGNORE_EXPRS:
-    ignore_exprs.append(IGNORE_EXPRS[expr])
 
 sh_std_upper_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_UPPER_BOUND"])
 sh_std_lower_bound = float(BODY_MOVEMENT["SHOULDER_STDEV_LOWER_BOUND"])
@@ -148,270 +125,195 @@ faceexpr_texts = []
 emotion_texts = []
 mids = []
 head_shakes = []
+frame_idx = 0
 
-tier_name_list = tg.tierNameList
-
-# out = cv2.VideoWriter('debug.avi', -1, 20.0, (640,480))  # for saving the video with outputs labels (gaze, expression, body)
+gaze_label = ""
+emotion_label = ""
+body_label = ""
+expression_label = ""
+if not cap.isOpened():
+    print("Error opening video file")
 
 while cap.isOpened():
-    tg_gaze = textgrid.Textgrid()
-    tg_expr = textgrid.Textgrid()
-    tg_body = textgrid.Textgrid()
-    tg_emotion = textgrid.Textgrid()
+    success, img = cap.read()
 
-    for tier_name in tier_name_list:
+    if not success:
+        break
+
+    img.flags.writeable = False
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
+
+    # GAZE
+    if gaze:
+        gaze_all = gaze_estimator.get_gaze_direction(img, )
+        if gaze_all is not None:
+            g_text = gaze_all[3]
+        else:
+            g_text = ""
         if verbose:
-            print(f"Working on {tier_name}.")
-        logging.info(f"Working on {tier_name}.")
-        gaze_entrylist = []
-        expr_entrylist = []
-        body_entrylist = []
-        emotion_entrylist = []
-        tier = tg.tierDict[tier_name]
-        entryList = tier.entryList
+            print(f"Frame {frame_idx} Gaze {g_text}")
+        logging.info(f"Frame {frame_idx} Gaze {g_text}")
+
+        gaze_texts.append(g_text)
+
+    # BODY
+    if body:
+        landmarks = mediapipe_shoulders.get_landmarks(img)
+        if landmarks is not None:
+            pitch, roll, yaw = mediapipe_shoulders.get_shake_nod(landmarks)
+            # HEAD SHAKE
+            head_shake = yaw
+            if head_shake is not None:
+                head_shakes.append(head_shake)
+                if verbose:
+                    print(f"Frame {frame_idx}, yaw: {yaw}")
+                logging.info(f"Frame {frame_idx}, yaw: {yaw}")
+
+            # HEAD NOD
+            if pitch is not None:
+                head_nods.append(pitch)
+                if verbose:
+                    print(f"Frame {frame_idx}, pitch: {pitch}")
+                logging.info(f"Frame {frame_idx}, pitch: {pitch}")
+
+            # SHOULDER MOVEMENT
+            mouth_sh_dist = mediapipe_shoulders.get_shoulder_movement(landmarks)
+            if mouth_sh_dist is not None:
+                mids.append(mouth_sh_dist)
+                if verbose:
+                    print(f"Frame {frame_idx} body move {mouth_sh_dist}")
+                logging.info(f"Frame {frame_idx} body move {mouth_sh_dist}")
+
+    # FACE EXPRESSION
+    if expressions:
+        face_expr = face_visible_expressions.get_face_expression(img)
+        if verbose:
+            print(f"Frame {frame_idx} face expr {face_expr}")
+        logging.info(f"Frame {frame_idx} face expr {face_expr}")
+
+        if face_expr is not None:
+            faceexpr_texts.append(face_expr)
+
+    # EMOTION
+    if emotions:
+        emotion_label = model.fer(img)
+        emotion_texts.append(emotion_label)
+
+        if verbose:
+            print(f"Frame {frame_idx} face emotion {emotion_label}")
+        logging.info(f"Frame {frame_idx} face emotion {emotion_label}")
+
+    if frame_idx % min_num_of_frames == 0:
+
+        if verbose:
+            print(f"Summarizing the interval results.")
+        logging.info(f"Summarizing the interval results.")
+
+        # GAZE LABEL
+        gaze_counter = Counter(gaze_texts)
 
         try:
-            for idx, entry in enumerate(entryList):
-                if verbose:
-                    print(f"Working on interval {idx+1}...")
-                logging.info(f"WORKING ON INTERVAL {idx+1}...")
-                start = entry.start
-                end = entry.end
-                label = entry.label
-                total_sec = end - start
-                num_frames = total_sec * 25
-                cap.set(cv2.CAP_PROP_POS_FRAMES, round(start * fps))
-                if label != "0" or label in ignore_exprs:
-                    logging.info(f"FRAME NUMBER {cap.get(cv2.CAP_PROP_POS_FRAMES)}")
-                    if int(num_frames) > min_num_of_frames:
-                        frame_idx = cap.get(cv2.CAP_PROP_POS_FRAMES)
-                        while frame_idx < end*fps:
-                            success, img = cap.read()
-                            img.flags.writeable = False
-                            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # frame to RGB for the face-mesh model
+            most_common_gaze = gaze_counter.most_common(1)[0][0]
+        except:
+            most_common_gaze = ""
 
-                            # GAZE
-                            if gaze:
-                                gaze_all = gaze_estimator.get_gaze_direction(img, )
-                                if gaze_all is not None:
-                                    g_text = gaze_all[3]
-                                else:
-                                    g_text = ""
-                                if verbose:
-                                    print(f"Frame {frame_idx} Gaze {g_text}")
-                                logging.info(f"Frame {frame_idx} Gaze {g_text}")
+        gaze_label = most_common_gaze
 
-                                gaze_texts.append(g_text)
+        # FACE EXPRESSION LABEL
+        face_expr_counter = Counter(faceexpr_texts)
 
-                            # BODY
-                            if body:
-                                landmarks = mediapipe_shoulders.get_landmarks(img)
-                                if landmarks is not None:
-                                    pitch, roll, yaw = mediapipe_shoulders.get_shake_nod(landmarks)
-                                    # HEAD SHAKE
-                                    head_shake = yaw
-                                    if head_shake is not None:
-                                        head_shakes.append(head_shake)
-                                        if verbose:
-                                            print(f"Frame {frame_idx}, yaw: {yaw}")
-                                        logging.info(f"Frame {frame_idx}, yaw: {yaw}")
+        try:
+            most_common_face_expr = face_expr_counter.most_common(1)[0][0]
+        except:
+            most_common_face_expr = ""
 
-                                    # HEAD NOD
-                                    if pitch is not None:
-                                        head_nods.append(pitch)
-                                        if verbose:
-                                            print(f"Frame {frame_idx}, pitch: {pitch}")
-                                        logging.info(f"Frame {frame_idx}, pitch: {pitch}")
+        expression_label = most_common_face_expr
 
-                                    # SHOULDER MOVEMENT
-                                    mouth_sh_dist = mediapipe_shoulders.get_shoulder_movement(landmarks)
-                                    if mouth_sh_dist is not None:
-                                        mids.append(mouth_sh_dist)
-                                        if verbose:
-                                            print(f"Frame {frame_idx} body move {mouth_sh_dist}")
-                                        logging.info(f"Frame {frame_idx} body move {mouth_sh_dist}")
+        # SHOULDER MOVEMENT
+        if len(mids) >= 2:
+            mids_stdev = statistics.stdev(mids)
+            mids_stdev = mids_stdev * 10000
+        else:
+            mids_stdev = 0.0
 
-                            # FACE EXPRESSION
-                            if expressions:
-                                face_expr = face_visible_expressions.get_face_expression(img)
-                                if verbose:
-                                    print(f"Frame {frame_idx} face expr {face_expr}")
-                                logging.info(f"Frame {frame_idx} face expr {face_expr}")
+        if (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
+            shoulder_text = "SHOULDER MOVEMENT"
+        else:
+            shoulder_text = ""
 
-                                if face_expr is not None:
-                                    faceexpr_texts.append(face_expr)
+        # HEAD SHAKE
+        if len(head_shakes) >= 2:
+            head_shake_stdev = statistics.stdev(head_shakes)
+            head_shake_stdev = head_shake_stdev * 10000
+        else:
+            head_shake_stdev = 0.0
 
-                            # EMOTION
-                            if emotions:
-                                emotion_label = model.fer(img)
-                                emotion_texts.append(emotion_label)
+        if head_shake_stdev >= HEAD_SHAKE_STDEV:
+            shake_text = "HEAD SHAKE"
+        else:
+            shake_text = ""
 
-                                if verbose:
-                                    print(f"Frame {frame_idx} face emotion {emotion_label}")
-                                logging.info(f"Frame {frame_idx} face emotion {emotion_label}")
+        # HEAD NOD
+        if len(head_nods) >= 2:
+            nod_mean = mean(head_nods)
+        else:
+            nod_mean = 0.0
+        print(nod_mean, NOD_MEAN)
+        if nod_mean < NOD_MEAN:
+            nod_text = "HEAD NOD"
+        else:
+            nod_text = ""
 
-                            frame_idx += 1
+        # BODY LABEL
+        if len(nod_text) > 0:
+            most_common_head_move = nod_text
+        else:
+            most_common_head_move = shake_text
 
-                        else:
-                            if not debug:
+        if most_common_head_move == "HEAD NOD":
+            body_label = most_common_head_move
+        elif most_common_head_move == "HEAD SHAKE":
+            if len(shoulder_text) > 0:
+                body_label = shoulder_text
+            else:
+                body_label = most_common_head_move
+        else:
+            body_label = shoulder_text
 
-                                if verbose:
-                                    print(f"Summarizing the interval results.")
-                                logging.info(f"Summarizing the interval results.")
+        # EMOTION LABEL
+        emotion_counter = Counter(emotion_texts)
 
-                                # GAZE LABEL
-                                gaze_counter = Counter(gaze_texts)
+        try:
+            most_common_emotion = emotion_counter.most_common(1)[0][0]
+        except:
+            most_common_emotion = ""
 
-                                try:
-                                    most_common_gaze = gaze_counter.most_common(1)[0][0]
-                                except:
-                                    most_common_gaze = ""
+        emotion_label = most_common_emotion
+        if emotion_label == "null":
+            emotion_label = ""
 
-                                gaze_label = most_common_gaze
+        head_nods = []
+        gaze_texts = []
+        faceexpr_texts = []
+        emotion_texts = []
+        head_shakes = []
+        mids = []
 
-                                # FACE EXPRESSION LABEL
-                                face_expr_counter = Counter(faceexpr_texts)
+    cv2.putText(img, f"GAZE: {gaze_label}", (20, 70), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
+    cv2.putText(img, f"EXPRESSION: {expression_label}", (20, 100), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
+    cv2.putText(img, f"BODY: {body_label}", (20, 130), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
+    cv2.putText(img, f"EMOTION: {emotion_label}", (20, 160), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 1, cv2.LINE_AA, False)
 
-                                try:
-                                    most_common_face_expr = face_expr_counter.most_common(1)[0][0]
-                                except:
-                                    most_common_face_expr = ""
+        # for saving the video with labels (expr, gaze, body)
 
-                                expression_label = most_common_face_expr
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imshow('analyzed video', img)
 
-                                # SHOULDER MOVEMENT
-                                if len(mids) >= 2:
-                                    mids_stdev = statistics.stdev(mids)
-                                    mids_stdev = mids_stdev * 10000
-                                else:
-                                    mids_stdev = 0.0
+    frame_idx += 1
+        # out.write(img)
 
-                                if (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
-                                    shoulder_text = "SHOULDER MOVEMENT"
-                                else:
-                                    shoulder_text = ""
+    if cv2.waitKey(25) & 0xFF == ord('q'):
+        break
 
-                                # HEAD SHAKE
-                                if len(head_shakes) >= 2:
-                                    head_shake_stdev = statistics.stdev(head_shakes)
-                                    head_shake_stdev = head_shake_stdev * 10000
-                                else:
-                                    head_shake_stdev = 0.0
-
-                                if head_shake_stdev >= HEAD_SHAKE_STDEV:
-                                    shake_text = "HEAD SHAKE"
-                                else:
-                                    shake_text = ""
-
-                                # HEAD NOD
-                                if len(head_nods) >= 2:
-                                    nod_mean = mean(head_nods)
-                                else:
-                                    nod_mean = 0.0
-
-                                if nod_mean < NOD_MEAN:
-                                    nod_text = "HEAD NOD"
-                                else:
-                                    nod_text = ""
-
-                                # BODY LABEL
-                                if len(nod_text) > 0:
-                                    most_common_head_move = nod_text
-                                else:
-                                    most_common_head_move = shake_text
-
-                                if most_common_head_move == "HEAD NOD":
-                                    body_label = most_common_head_move
-                                elif most_common_head_move == "HEAD SHAKE":
-                                    if len(shoulder_text) > 0:
-                                        body_label = shoulder_text
-                                    else:
-                                        body_label = most_common_head_move
-                                else:
-                                    body_label = shoulder_text
-
-                                # EMOTION LABEL
-                                emotion_counter = Counter(emotion_texts)
-
-                                try:
-                                    most_common_emotion = emotion_counter.most_common(1)[0][0]
-                                except:
-                                    most_common_emotion = ""
-
-                                emotion_label = most_common_emotion
-                                if emotion_label == "null":
-                                    emotion_label = ""
-
-                                gaze_entrylist.append((start, end, gaze_label))
-                                expr_entrylist.append((start, end, expression_label))
-                                body_entrylist.append((start, end, body_label))
-                                emotion_entrylist.append((start, end, emotion_label))
-
-                                # for saving the video with labels (expr, gaze, body)
-                                # final_text = f"{gaze_label}, {expression_label}, {body_label}"
-                                # cv2.putText(img, final_text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
-                                # cv2.imshow('Recording...', img)
-                                # out.write(img)
-                                head_nods = []
-                                gaze_texts = []
-                                faceexpr_texts = []
-                                emotion_texts = []
-                                head_shakes = []
-                                mids = []
-                                
-                            else:
-                                gaze_label = ','.join(gaze_texts)
-                                expression_label = ','.join(faceexpr_texts)
-                                body_label = ','.join(str(mid) for mid in mids)
-                                emotion_label = ','.join(emotion_texts)
-
-                                gaze_entrylist.append((start, end, gaze_label))
-                                expr_entrylist.append((start, end, expression_label))
-                                body_entrylist.append((start, end, body_label))
-                                emotion_entrylist.append((start, end, emotion_label))
-
-                    else:
-                        label = ""
-                        gaze_entrylist.append((start, end, label))
-                        expr_entrylist.append((start, end, label))
-                        body_entrylist.append((start, end, label))
-                        emotion_entrylist.append((start, end, label))
-
-            if verbose:
-                print(f"Done with {tier_name}.")
-            logging.info(f"Done with {tier_name}.")
-            textgrid_paths = textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                               output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
-
-        except KeyboardInterrupt:
-            logging.exception("Keyboard Interrupt.")
-            textgrid_generation.save_textgrids(tier, gaze_entrylist, expr_entrylist, body_entrylist, emotion_entrylist,
-                                      output_dir_name, tg_gaze, tg_expr, tg_body, tg_emotion, tier_name, type_of_run)
-
-            # REMOVING UNNECESSARY FILES
-            os.remove(merged_tg_path)
-            os.remove(final_tg_path)
-            os.remove(input_textgrid_path)
-
-            sys.exit()
-            cap.release()
-            cv2.destroyAllWindows()
-
-    if verbose:
-        print(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
-        print(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
-        print(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-        print(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
-
-    logging.info(f"File {textgrid_paths[0].split('/')[-1]} successfully saved!")
-    logging.info(f"File {textgrid_paths[1].split('/')[-1]} successfully saved!")
-    logging.info(f"File {textgrid_paths[2].split('/')[-1]} successfully saved!")
-    logging.info(f"File {textgrid_paths[3].split('/')[-1]} successfully saved!")
-
-    # REMOVING UNNECESSARY FILES
-    os.remove(merged_tg_path)
-    os.remove(final_tg_path)
-    os.remove(input_textgrid_path)
-
-    cap.release()
-    cv2.destroyAllWindows()
+cap.release()
+cv2.destroyAllWindows()
