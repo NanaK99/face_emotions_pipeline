@@ -127,6 +127,10 @@ mids = []
 head_shakes = []
 frame_idx = 0
 
+rights = []
+lefts = []
+degrees = []
+
 gaze_label = ""
 emotion_label = ""
 body_label = ""
@@ -150,9 +154,12 @@ while cap.isOpened():
             p1_left = gaze_all[0]
             p1_right = gaze_all[1]
             p2 = gaze_all[2]
+            # print(p2)
             g_text = gaze_all[3]
             cv2.line(img, p1_left, p2, (0, 0, 255), 2)
             cv2.line(img, p1_right, p2, (0, 0, 255), 2)
+            # cv2.rectangle(img, p1, p4, (0, 255, 0), -1)
+
         else:
             g_text = ""
         if verbose:
@@ -167,12 +174,54 @@ while cap.isOpened():
         if landmarks is not None:
             pitch, roll, yaw = mediapipe_shoulders.get_shake_nod(landmarks)
             # HEAD SHAKE
-            head_shake = yaw
-            if head_shake is not None:
-                head_shakes.append(head_shake)
+            if yaw is not None:
+                head_shakes.append(yaw)
                 if verbose:
                     print(f"Frame {frame_idx}, yaw: {yaw}")
                 logging.info(f"Frame {frame_idx}, yaw: {yaw}")
+                # print("yaw", yaw)
+
+            ##################################
+            import mediapipe as mp
+            mp_holistic = mp.solutions.holistic
+            left_sh_x = int(landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value].x * img.shape[1])
+            left_sh_y = int(landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value].y * img.shape[0])
+
+            right_sh_x = int(landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value].x * img.shape[1])
+            right_sh_y = int(landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value].y * img.shape[0])
+
+            nose_x = int(landmarks[mp_holistic.PoseLandmark.NOSE.value].x * img.shape[1])
+            nose_y = int(landmarks[mp_holistic.PoseLandmark.NOSE.value].y * img.shape[0])
+
+            # print(right_sh_y, type(right_sh_y))
+
+            # print(right_sh, type(right_sh))
+            cv2.circle(img, (left_sh_x, left_sh_y), 5, (0, 0, 255), -1)
+            cv2.circle(img, (right_sh_x, right_sh_y), 5, (0, 0, 255), -1)
+            cv2.line(img, (left_sh_x, left_sh_y), (nose_x, nose_y), color=(255, 0, 0),
+                     thickness=3)
+            cv2.line(img, (right_sh_x, right_sh_y), (nose_x, nose_y), color=(255, 0, 0),
+                     thickness=3)
+            cv2.line(img, (right_sh_x, right_sh_y), (left_sh_x, left_sh_y), color=(255, 0, 0),
+                     thickness=3)
+
+            left_sh = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+            left_sh_vector = (left_sh.x, left_sh.y, left_sh.z)
+            right_sh = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+            right_sh_vector = (right_sh.x, right_sh.y, right_sh.z)
+
+            import numpy as np
+            import math
+            dot_product = np.dot(right_sh_vector, left_sh_vector)
+            magnitude_left_sh = np.linalg.norm(left_sh_vector)
+            magnitude_right_sh = np.linalg.norm(right_sh_vector)
+            cos_theta = dot_product / (magnitude_left_sh * magnitude_right_sh)
+            theta_radians = math.acos(cos_theta)
+            theta_degrees = math.degrees(theta_radians)
+            degrees.append(theta_degrees)
+            # print(theta_degrees)
+
+            #######################################################
 
             # HEAD NOD
             if pitch is not None:
@@ -180,7 +229,8 @@ while cap.isOpened():
                 if verbose:
                     print(f"Frame {frame_idx}, pitch: {pitch}")
                 logging.info(f"Frame {frame_idx}, pitch: {pitch}")
-
+                # print("pitch", pitch)
+                # print("roll", roll)
             # SHOULDER MOVEMENT
             mouth_sh_dist = mediapipe_shoulders.get_shoulder_movement(landmarks)
             if mouth_sh_dist is not None:
@@ -188,6 +238,12 @@ while cap.isOpened():
                 if verbose:
                     print(f"Frame {frame_idx} body move {mouth_sh_dist}")
                 logging.info(f"Frame {frame_idx} body move {mouth_sh_dist}")
+                # print("mouth sh dist",mouth_sh_dist)
+            # SHOULDER MOVEMENT_EXPERIMENT
+            left, right = mediapipe_shoulders.get_shoulder_movement_exp(landmarks)
+            if left is not None and right is not None:
+                lefts.append(left)
+                rights.append(right)
 
     # FACE EXPRESSION
     if expressions:
@@ -234,56 +290,93 @@ while cap.isOpened():
 
         expression_label = most_common_face_expr
 
-        # SHOULDER MOVEMENT
-        if len(mids) >= 2:
-            mids_stdev = statistics.stdev(mids)
-            mids_stdev = mids_stdev * 10000
-        else:
-            mids_stdev = 0.0
-
-        if (mids_stdev < sh_std_upper_bound and mids_stdev > sh_std_lower_bound):
-            shoulder_text = "SHOULDER MOVEMENT"
-        else:
-            shoulder_text = ""
-
         # HEAD SHAKE
         if len(head_shakes) >= 2:
             head_shake_stdev = statistics.stdev(head_shakes)
             head_shake_stdev = head_shake_stdev * 10000
         else:
             head_shake_stdev = 0.0
-        # print(head_shake_stdev, HEAD_SHAKE_STDEV)
+
         if head_shake_stdev >= HEAD_SHAKE_STDEV:
-            shake_text = "HEAD SHAKE"
+            body_label = "HEAD SHAKE"
         else:
-            shake_text = ""
+            body_label = ""
+
+        if len(mids) >= 2:
+            mids_stdev = statistics.stdev(mids)
+            mids_stdev = mids_stdev * 10000
+        else:
+            mids_stdev = 0.0
+
+        if len(degrees) >= 2:
+            degrees_stdev = statistics.stdev(degrees)
+            degrees_stdev = degrees_stdev * 10000
+        else:
+            degrees_stdev = 0.0
+
+        if len(body_label) == 0:
+            # print("mids stdev",mids_stdev)
+            # print("degrees", degrees_stdev)
+            try:
+                ratio = degrees_stdev // mids_stdev
+            except ZeroDivisionError as err:
+                ratio = 0.0
+            # print("ratio", ratio)
+            if mids_stdev < 130 and mids_stdev > 30 and ratio > 50:
+                body_label = "SHOULDER MOVEMENT"
+            elif mids_stdev > 100 and degrees_stdev > 2000 and ratio < 50:
+                body_label = "HEAD NOD"
+            else:
+                body_label = ""
+        # if len(lefts) >= 2 and len(rights) >=2:
+        #     lefts_stdev = statistics.stdev(lefts)
+        #     lefts_stdev = lefts_stdev * 10000
+        #     rights_stdev = statistics.stdev(rights)
+        #     rights_stdev = rights_stdev * 10000
+        # else:
+        #     lefts_stdev = 0.0
+        #     rights_stdev = 0.0
+        # if len(body_label) == 0:
+        #     print("degrees stdev", degrees_stdev)
+        #     print("mids stdev",mids_stdev)
+        #     if degrees_stdev >= 3000 and mids_stdev < 40:
+        #         body_label = "SHOULDER MOVEMENT"
+        #     else:
+        #         body_label = ""
 
         # HEAD NOD
-        if len(head_nods) >= 2:
-            nod_min = min(head_nods)
-        else:
-            nod_min = 0.0
-        # print(nod_max, NOD_MEAN)
-        if nod_min < NOD_MEAN:
-            nod_text = "HEAD NOD"
-        else:
-            nod_text = ""
+        # if len(body_label) == 0:
+        #     if len(head_nods) >= 2:
+        #         head_nod_stdev = statistics.stdev(head_nods)
+        #         head_nod_stdev = head_nod_stdev * 10000
+        #     else:
+        #         head_nod_stdev = 0.0
+            # print("head nod stdev", head_nod_stdev)
+        #     if head_nod_stdev >= 10000:
+        #         body_label = "HEAD NOD"
+        #     else:
+        #         body_label = ""
 
-        # BODY LABEL
-        if len(nod_text) > 0:
-            most_common_head_move = nod_text
-        else:
-            most_common_head_move = shake_text
+        # SHOULDER MOVEMENT EXPERIMENT
+        # if len(body_label) == 0:
+        #     if rights_stdev > 175 and lefts_stdev > 175:
+        #         body_label = "SHOULDER MOVEMENT"
+        #     else:
+        #         body_label = ""
+        #
+        #     print(lefts_stdev, rights_stdev)
 
-        if most_common_head_move == "HEAD NOD":
-            body_label = most_common_head_move
-        elif most_common_head_move == "HEAD SHAKE":
-            if len(shoulder_text) > 0:
-                body_label = shoulder_text
-            else:
-                body_label = most_common_head_move
-        else:
-            body_label = shoulder_text
+        # SHOULDER MOVEMENT
+        # if len(body_label) == 0:
+        #     # print("mids stdev",mids_stdev)
+        #     if mids_stdev > 80:
+        #         body_label = "HEAD NOD"
+        #     # elif mids_stdev > 30:
+        #     #     body_label = "SHOULDER MOVEMENT"
+        #     else:
+        #         body_label = ""
+
+        # print(body_label)
 
         # EMOTION LABEL
         emotion_counter = Counter(emotion_texts)
@@ -303,6 +396,7 @@ while cap.isOpened():
         emotion_texts = []
         head_shakes = []
         mids = []
+        degrees = []
 
     if body:
         cv2.putText(img, f"BODY: {body_label}", (20, 130), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA, False)

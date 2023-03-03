@@ -177,6 +177,30 @@ def get_euler_angles(rotation):
 #
 #         return middle_mouth_shoulder_dist
 
+def get_shoulder_movement_exp(landmarks):
+    # # Process the image and detect the holistic
+    # results = holistic.process(image)
+    # # results = pose.process(image)
+    # # Draw landmark annotation on the image.
+    # image.flags.writeable = True
+    # image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    #
+    # if results.pose_landmarks is None:
+    #     return None
+    #
+    # landmarks = results.pose_landmarks.landmark
+
+    left_shoulder = landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value]
+    right_shoulder = landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value]
+
+    l_shldr_x = left_shoulder.x
+    l_shldr_y = left_shoulder.y
+    r_shldr_x = right_shoulder.x
+    r_shldr_y = right_shoulder.y
+
+    return l_shldr_y, r_shldr_y
+
+
 def get_shoulder_movement(landmarks):
     # # Process the image and detect the holistic
     # results = holistic.process(image)
